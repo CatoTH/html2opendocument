@@ -2,7 +2,7 @@ This is a side project from [Antragsgrün](https://github.com/CatoTH/antragsgrue
 
 A demo script for the OpenDocument Text converter using the default template:
 
-```<?php
+```php
 require_once(__DIR__ . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php');
 
 $html = '<p>This is a demo for the converter.</p>
@@ -20,7 +20,8 @@ $html = '<p>This is a demo for the converter.</p>
 <blockquote>You can also use BLOCKQUOTE, though it lacks specific styling for now</blockquote>';
 
 $html2 = '<p>You might be interested<br>in the fact that this converter<br>also supports<br>line numbering<br>for selected paragraphs</p>
-<p>Dummy Line<br>Dummy Line<br>Dummy Line<br>Dummy Line<br>Dummy Line</p>';
+<p>Dummy Line<br>Dummy Line<br>Dummy Line<br>
+Dummy Line<br>Dummy Line</p>';
 
 $odt = new \CatoTH\HTML2OpenDocument\Text();
 $odt->addHtmlTextBlock('<h1>Test Page</h1>');
@@ -28,13 +29,12 @@ $odt->addHtmlTextBlock($html, false);
 $odt->addHtmlTextBlock('<h2>Line Numbering</h2>');
 $odt->addHtmlTextBlock($html2, true);
 $odt->finishAndOutputOdt('demo.odt');
-?>
 ```
 
 
 A demo script for the OpenDocument Spreadsheet converter using the default template:
 
-```<?php
+```php
 use CatoTH\HTML2OpenDocument\Spreadsheet;
 require_once(__DIR__ . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php');
 
@@ -79,4 +79,4 @@ $ods->setCell(3, 1, Spreadsheet::TYPE_HTML, $html);
 
 
 $ods->finishAndOutputOds('demo.ods');
-?>```
+```
