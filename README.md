@@ -91,4 +91,4 @@ $ods->finishAndOutputOds('demo.ods');
 
 ## License
 
-This library is open-sourced software licensed under the [MIT license](http://opensource.org/licenses/MIT)
+This library is licensed under the [MIT license](http://opensource.org/licenses/MIT)
