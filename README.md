@@ -19,7 +19,8 @@ $html = '<p>This is a demo for the converter.</p>
 </ul>
 <blockquote>You can also use BLOCKQUOTE, though it lacks specific styling for now</blockquote>';
 
-$html2 = '<p>You might be interested<br>in the fact that this converter<br>also supports<br>line numbering<br>for selected paragraphs</p>
+$html2 = '<p>You might be interested<br>in the fact that this converter<br>
+also supports<br>line numbering<br>for selected paragraphs</p>
 <p>Dummy Line<br>Dummy Line<br>Dummy Line<br>
 Dummy Line<br>Dummy Line</p>';
 
