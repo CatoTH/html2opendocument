@@ -53,6 +53,34 @@ class Spreadsheet extends Base
 
     protected $classCache = [];
 
+    /**
+     * @param array $options
+     * @throws \Exception
+     */
+    public function __construct($options = [])
+    {
+        if (isset($options['templateFile']) && $options['templateFile'] != '') {
+            $templateFile = $options['templateFile'];
+        } else {
+            $templateFile = __DIR__ . DIRECTORY_SEPARATOR . 'default-template.ods';
+        }
+        parent::__construct($templateFile, $options);
+    }
+
+    /**
+     * @param string $filename
+     */
+    public function finishAndOutputOds($filename = '')
+    {
+        Header('Content-Type: application/vnd.oasis.opendocument.spreadsheet');
+        if ($filename != '') {
+            Header('Content-disposition: attachment;filename="' . addslashes($filename) . '"');
+        }
+
+        echo $this->finishAndGetDocument();
+
+        die();
+    }
 
     /**
      * @param string $styleName
@@ -413,6 +441,9 @@ class Spreadsheet extends Base
             case 'i':
             case 'em':
                 $currentFormats[] = static::FORMAT_ITALIC;
+                break;
+            case 's':
+                $currentFormats[] = static::FORMAT_STRIKE;
                 break;
             case 'u':
                 $currentFormats[] = static::FORMAT_UNDERLINED;

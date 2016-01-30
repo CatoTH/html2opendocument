@@ -22,22 +22,59 @@ abstract class Base
     /** @var string */
     protected $tmpPath = '/tmp/';
 
+    /** @var \ZipArchive */
+    private $zip;
+
+    /** @var @string */
+    private $tmpZipFile;
+
+
     /**
-     * @param string $content
+     * @param array $options
+     * @throws \Exception
      */
-    public function __construct($content)
+    public function __construct($templateFile, $options = [])
     {
+        $template = file_get_contents($templateFile);
+        if (isset($options['tmpPath']) && $options['tmpPath'] != '') {
+            $this->tmpPath = $options['tmpPath'];
+        }
+
+        $this->tmpZipFile = $this->tmpPath . uniqid('zip-');
+        file_put_contents($this->tmpZipFile, $template);
+
+        $this->zip = new \ZipArchive();
+        if ($this->zip->open($this->tmpZipFile) !== true) {
+            throw new \Exception("cannot open <$this->tmpZipFile>\n");
+        }
+
+        $content = $this->zip->getFromName('content.xml');
+
         $this->doc = new \DOMDocument();
         $this->doc->loadXML($content);
+
     }
 
     /**
-     * @param string $path
+     * @return string
      */
-    public function setTmpPath($path)
+    public function finishAndGetDocument()
     {
-        $this->tmpPath = $path;
+        $content = $this->create();
+
+        $this->zip->deleteName('content.xml');
+        $this->zip->addFromString('content.xml', $content);
+        $this->zip->close();
+
+        $content = file_get_contents($this->tmpZipFile);
+        unlink($this->tmpZipFile);
+        return $content;
     }
+
+    /**
+     * @return string
+     */
+    abstract function create();
 
     /**
      * @param string $html

@@ -16,12 +16,6 @@ class Text extends Base
     /** @var array */
     private $textBlocks = [];
 
-    /** @var \ZipArchive */
-    private $zip;
-
-    /** @var @string */
-    private $tmpZipFile;
-
     /**
      * @param array $options
      * @throws \Exception
@@ -29,41 +23,11 @@ class Text extends Base
     public function __construct($options = [])
     {
         if (isset($options['templateFile']) && $options['templateFile'] != '') {
-            $template = file_get_contents($options['templateFile']);
+            $templateFile = $options['templateFile'];
         } else {
-            $template = file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . 'default-template.odt');
+            $templateFile = __DIR__ . DIRECTORY_SEPARATOR . 'default-template.odt';
         }
-        if (isset($options['tmpPath']) && $options['tmpPath'] != '') {
-            $this->tmpPath = $options['tmpPath'];
-        }
-
-        $this->tmpZipFile = $this->tmpPath . uniqid('zip-');
-        file_put_contents($this->tmpZipFile, $template);
-
-        $this->zip = new \ZipArchive();
-        if ($this->zip->open($this->tmpZipFile) !== true) {
-            throw new \Exception("cannot open <$this->tmpZipFile>\n");
-        }
-
-        $content = $this->zip->getFromName('content.xml');
-
-        parent::__construct($content);
-    }
-
-    /**
-     * @return string
-     */
-    public function finishAndGetOdt()
-    {
-        $content = $this->convert();
-
-        $this->zip->deleteName('content.xml');
-        $this->zip->addFromString('content.xml', $content);
-        $this->zip->close();
-
-        $content = file_get_contents($this->tmpZipFile);
-        unlink($this->tmpZipFile);
-        return $content;
+        parent::__construct($templateFile, $options);
     }
 
     /**
@@ -73,10 +37,10 @@ class Text extends Base
     {
         Header('Content-Type: application/vnd.oasis.opendocument.text');
         if ($filename != '') {
-            Header('Content-disposition: filename="' . addslashes($filename) . '"');
+            Header('Content-disposition: attachment;filename="' . addslashes($filename) . '"');
         }
 
-        echo $this->finishAndGetOdt();
+        echo $this->finishAndGetDocument();
 
         die();
     }
@@ -346,7 +310,7 @@ class Text extends Base
     /**
      * @return string
      */
-    public function convert()
+    public function create()
     {
         $this->appendTextStyleNode('AntragsgruenBold', [
             'fo:font-weight'            => 'bold',
