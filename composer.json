@@ -1,5 +1,5 @@
 {
-    "name": "CatoTH/HTML2OpenDocument",
+    "name": "catoth/html2opendocument",
     "description": "Converting simple HTML to Opendocument Text (ODT) or Spreadsheets (ODS)",
     "type": "library",
     "minimum-stability": "stable",
