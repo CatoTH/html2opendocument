@@ -1,5 +1,11 @@
 <?php
 
+/**
+ * @link https://github.com/CatoTH/html2opendocument
+ * @author Tobias Hößl <tobias@hoessl.eu>
+ * @license https://opensource.org/licenses/MIT
+ */
+
 namespace CatoTH\HTML2OpenDocument;
 
 abstract class Base

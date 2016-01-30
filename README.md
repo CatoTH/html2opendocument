@@ -1,4 +1,9 @@
-This is a side project from [Antragsgrün](https://github.com/CatoTH/antragsgruen).
+This is a simple PHP-library to create create OpenDocument Text- and Spreadsheet-files (ODT / ODS) from HTML-formatted text.
+
+It does not support formulae / calculations in spreadsheets. The focus lies on formatted text.
+
+
+## Example Scripts
 
 A demo script for the OpenDocument Text converter using the default template:
 
@@ -81,3 +86,9 @@ $ods->setCell(3, 1, Spreadsheet::TYPE_HTML, $html);
 
 $ods->finishAndOutputOds('demo.ods');
 ```
+
+
+
+## License
+
+The Laravel framework is open-sourced software licensed under the [MIT license](http://opensource.org/licenses/MIT)
