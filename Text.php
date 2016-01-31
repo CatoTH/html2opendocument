@@ -24,6 +24,7 @@ class Text extends Base
 
     /**
      * @param array $options
+     *
      * @throws \Exception
      */
     public function __construct($options = [])
@@ -72,6 +73,7 @@ class Text extends Base
     /**
      * @param \DOMNode $srcNode
      * @param bool $lineNumbered
+     *
      * @return \DOMNode[]
      * @throws \Exception
      */
@@ -84,7 +86,7 @@ class Text extends Base
                 if ($this->DEBUG) {
                     echo "Element - " . $srcNode->nodeName . " / Children: " . count($srcNode->childNodes) . "<br>";
                 }
-                $appendEl = null;
+                $needsIntermediateP = false;
                 switch ($srcNode->nodeName) {
                     case 'span':
                         $dstEl = $this->doc->createElementNS(static::NS_TEXT, 'span');
@@ -186,9 +188,8 @@ class Text extends Base
                         $dstEl = $this->doc->createElementNS(static::NS_TEXT, 'list');
                         break;
                     case 'li':
-                        $dstEl    = $this->doc->createElementNS(static::NS_TEXT, 'list-item');
-                        $appendEl = $this->getNextNodeTemplate($lineNumbered);
-                        $dstEl->appendChild($appendEl);
+                        $dstEl              = $this->doc->createElementNS(static::NS_TEXT, 'list-item');
+                        $needsIntermediateP = true;
                         break;
                     case 'h1':
                         $dstEl = $this->createNodeWithBaseStyle('p', $lineNumbered);
@@ -221,20 +222,13 @@ class Text extends Base
                         var_dump($dstNodes);
                     }
                     if ($dstNodes) {
-                        if ($appendEl) {
-                            foreach ($dstNodes as $dstNode) {
-                                $appendEl->appendChild($dstNode);
-                            }
-                        } else {
-                            foreach ($dstNodes as $dstNode) {
-                                if (in_array($dstNode->nodeName, ['list', 'p'])) {
-                                    $newDst     = $dstEl->cloneNode(false);
-                                    $retNodes[] = $dstEl;
-                                    $dstEl      = $newDst;
-                                    $retNodes[] = $dstNode;
-                                } else {
-                                    $dstEl->appendChild($dstNode);
-                                }
+                        foreach ($dstNodes as $dstNode) {
+                            if ($needsIntermediateP && ! in_array(strtolower($child->nodeName), ['p', 'ul', 'ol'])) {
+                                $appendNode = $this->getNextNodeTemplate($lineNumbered);
+                                $appendNode->appendChild($dstNode);
+                                $dstEl->appendChild($appendNode);
+                            } else {
+                                $dstEl->appendChild($dstNode);
                             }
                         }
                     }
@@ -260,17 +254,19 @@ class Text extends Base
                     echo 'Unknown Node: ' . $srcNode->nodeType . '<br>';
                 }
         }
+
         return $retNodes;
     }
 
     /**
      * @param string $html
      * @param bool $lineNumbered
+     *
      * @return \DOMNode[]
      */
     protected function html2ooNodes($html, $lineNumbered)
     {
-        if (!is_string($html)) {
+        if ( ! is_string($html)) {
             echo print_r($html, true);
             echo print_r(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS), true);
             die();
@@ -310,6 +306,7 @@ class Text extends Base
                 $retNodes[] = $recNewNode;
             }
         }
+
         return $retNodes;
     }
 
@@ -404,6 +401,7 @@ class Text extends Base
 
     /**
      * @param bool $lineNumbers
+     *
      * @return \DOMNode
      */
     protected function getNextNodeTemplate($lineNumbers)
@@ -420,12 +418,14 @@ class Text extends Base
         } else {
             $node->setAttribute('text:style-name', 'Antragsgrün_20_Standard');
         }
+
         return $node;
     }
 
     /**
      * @param string $nodeType
      * @param bool $lineNumbers
+     *
      * @return \DOMElement|\DOMNode
      */
     protected function createNodeWithBaseStyle($nodeType, $lineNumbers)
@@ -441,6 +441,7 @@ class Text extends Base
         } else {
             $node->setAttribute('text:style-name', 'Antragsgrün_20_Standard');
         }
+
         return $node;
     }
 }
