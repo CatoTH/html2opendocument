@@ -73,11 +73,12 @@ class Text extends Base
     /**
      * @param \DOMNode $srcNode
      * @param bool $lineNumbered
+     * @param bool $inP
      *
      * @return \DOMNode[]
      * @throws \Exception
      */
-    protected function html2ooNodeInt($srcNode, $lineNumbered)
+    protected function html2ooNodeInt($srcNode, $lineNumbered, $inP)
     {
         $retNodes = [];
         switch ($srcNode->nodeType) {
@@ -167,7 +168,12 @@ class Text extends Base
                         break;
                     case 'p':
                     case 'div':
-                        $dstEl = $this->createNodeWithBaseStyle('p', $lineNumbered);
+                        if ($inP) {
+                            $dstEl = $this->createNodeWithBaseStyle('span', $lineNumbered);
+                        } else {
+                            $dstEl = $this->createNodeWithBaseStyle('p', $lineNumbered);
+                        }
+                        $inP   = true;
                         break;
                     case 'blockquote':
                         $dstEl = $this->createNodeWithBaseStyle('p', $lineNumbered);
@@ -180,6 +186,7 @@ class Text extends Base
                                 }
                             }
                         }
+                        $inP = true;
                         break;
                     case 'ul':
                         $dstEl = $this->doc->createElementNS(static::NS_TEXT, 'list');
@@ -190,22 +197,27 @@ class Text extends Base
                     case 'li':
                         $dstEl              = $this->doc->createElementNS(static::NS_TEXT, 'list-item');
                         $needsIntermediateP = true;
+                        $inP                = true;
                         break;
                     case 'h1':
                         $dstEl = $this->createNodeWithBaseStyle('p', $lineNumbered);
                         $dstEl->setAttribute('text:style-name', 'Antragsgrün_20_H1');
+                        $inP = true;
                         break;
                     case 'h2':
                         $dstEl = $this->createNodeWithBaseStyle('p', $lineNumbered);
                         $dstEl->setAttribute('text:style-name', 'Antragsgrün_20_H2');
+                        $inP = true;
                         break;
                     case 'h3':
                         $dstEl = $this->createNodeWithBaseStyle('p', $lineNumbered);
                         $dstEl->setAttribute('text:style-name', 'Antragsgrün_20_H3');
+                        $inP = true;
                         break;
                     case 'h4':
                         $dstEl = $this->createNodeWithBaseStyle('p', $lineNumbered);
                         $dstEl->setAttribute('text:style-name', 'Antragsgrün_20_H4');
+                        $inP = true;
                         break;
                     default:
                         throw new \Exception('Unknown Tag: ' . $srcNode->nodeName);
@@ -216,14 +228,14 @@ class Text extends Base
                         echo "CHILD<br>" . $child->nodeType . "<br>";
                     }
 
-                    $dstNodes = $this->html2ooNodeInt($child, $lineNumbered);
+                    $dstNodes = $this->html2ooNodeInt($child, $lineNumbered, $inP);
                     if ($this->DEBUG) {
                         echo "CHILD";
                         var_dump($dstNodes);
                     }
                     if ($dstNodes) {
                         foreach ($dstNodes as $dstNode) {
-                            if ($needsIntermediateP && ! in_array(strtolower($child->nodeName), ['p', 'ul', 'ol'])) {
+                            if ($needsIntermediateP && !in_array(strtolower($child->nodeName), ['p', 'ul', 'ol'])) {
                                 $appendNode = $this->getNextNodeTemplate($lineNumbered);
                                 $appendNode->appendChild($dstNode);
                                 $dstEl->appendChild($appendNode);
@@ -266,7 +278,7 @@ class Text extends Base
      */
     protected function html2ooNodes($html, $lineNumbered)
     {
-        if ( ! is_string($html)) {
+        if (!is_string($html)) {
             echo print_r($html, true);
             echo print_r(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS), true);
             die();
@@ -283,7 +295,7 @@ class Text extends Base
                 if ($this->DEBUG) {
                     echo 'LIST<br>';
                 }
-                $recNewNodes = $this->html2ooNodeInt($child, $lineNumbered);
+                $recNewNodes = $this->html2ooNodeInt($child, $lineNumbered, false);
             } else {
                 if ($child->nodeType == XML_TEXT_NODE) {
                     $new_node = $this->getNextNodeTemplate($lineNumbered);
@@ -299,7 +311,7 @@ class Text extends Base
                     if ($this->DEBUG) {
                         echo $child->nodeName . '!!!!!!!!!!!!<br>';
                     }
-                    $recNewNodes = $this->html2ooNodeInt($child, $lineNumbered);
+                    $recNewNodes = $this->html2ooNodeInt($child, $lineNumbered, false);
                 }
             }
             foreach ($recNewNodes as $recNewNode) {
