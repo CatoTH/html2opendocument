@@ -78,9 +78,9 @@ class Spreadsheet extends Base
      */
     public function finishAndOutputOds($filename = '')
     {
-        Header('Content-Type: application/vnd.oasis.opendocument.spreadsheet');
+        header('Content-Type: application/vnd.oasis.opendocument.spreadsheet');
         if ($filename != '') {
-            Header('Content-disposition: attachment;filename="' . addslashes($filename) . '"');
+            header('Content-disposition: attachment;filename="' . addslashes($filename) . '"');
         }
 
         echo $this->finishAndGetDocument();

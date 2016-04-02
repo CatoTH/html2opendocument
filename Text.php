@@ -42,9 +42,9 @@ class Text extends Base
      */
     public function finishAndOutputOdt($filename = '')
     {
-        Header('Content-Type: application/vnd.oasis.opendocument.text');
+        header('Content-Type: application/vnd.oasis.opendocument.text');
         if ($filename != '') {
-            Header('Content-disposition: attachment;filename="' . addslashes($filename) . '"');
+            header('Content-disposition: attachment;filename="' . addslashes($filename) . '"');
         }
 
         echo $this->finishAndGetDocument();

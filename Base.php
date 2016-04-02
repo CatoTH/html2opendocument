@@ -24,6 +24,7 @@ abstract class Base
 
     /** @var bool */
     protected $DEBUG = false;
+    protected $trustHtml = false;
 
     /** @var string */
     protected $tmpPath = '/tmp/';
@@ -36,6 +37,7 @@ abstract class Base
 
 
     /**
+     * @param string $templateFile
      * @param array $options
      * @throws \Exception
      */
@@ -44,6 +46,9 @@ abstract class Base
         $template = file_get_contents($templateFile);
         if (isset($options['tmpPath']) && $options['tmpPath'] != '') {
             $this->tmpPath = $options['tmpPath'];
+        }
+        if (isset($options['trustHtml'])) {
+            $this->trustHtml = ($options['trustHtml'] == true);
         }
 
         $this->tmpZipFile = $this->tmpPath . uniqid('zip-');
@@ -103,14 +108,16 @@ abstract class Base
      */
     public function html2DOM($html)
     {
-        $html = $this->purifyHTML(
-            $html,
-            [
-                'HTML.Doctype' => 'HTML 4.01 Transitional',
-                'HTML.Trusted' => true,
-                'CSS.Trusted'  => true,
-            ]
-        );
+        if (!$this->trustHtml) {
+            $html = $this->purifyHTML(
+                $html,
+                [
+                    'HTML.Doctype' => 'HTML 4.01 Transitional',
+                    'HTML.Trusted' => true,
+                    'CSS.Trusted'  => true,
+                ]
+            );
+        }
 
         $src_doc = new \DOMDocument();
         $src_doc->loadHTML('<html><head>
