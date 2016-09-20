@@ -497,6 +497,8 @@ class Spreadsheet extends Base
             case 'h2':
             case 'h3':
             case 'h4':
+            case 'h5':
+            case 'h6':
                 $currentFormats[] = static::FORMAT_BOLD;
                 break;
             case 'a':
@@ -534,6 +536,12 @@ class Spreadsheet extends Base
                         $return[] = [
                             'text'        => '',
                             'formattings' => [static::FORMAT_LINEBREAK],
+                        ];
+                    }
+                    if (in_array($child->nodeName, ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'])) {
+                        $return[] = [
+                            'text'        => '',
+                            'formattings' => [static::FORMAT_LINEBREAK, static::FORMAT_BOLD],
                         ];
                     }
                     break;

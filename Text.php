@@ -215,6 +215,8 @@ class Text extends Base
                         $inP = true;
                         break;
                     case 'h4':
+                    case 'h5':
+                    case 'h6':
                         $dstEl = $this->createNodeWithBaseStyle('p', $lineNumbered);
                         $dstEl->setAttribute('text:style-name', 'Antragsgrün_20_H4');
                         $inP = true;
