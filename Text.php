@@ -114,7 +114,7 @@ class Text extends Base
                             if (in_array('superscript', $classes)) {
                                 $dstEl->setAttribute('text:style-name', 'AntragsgruenSup');
                             }
-                            if (in_array('subscritp', $classes)) {
+                            if (in_array('subscript', $classes)) {
                                 $dstEl->setAttribute('text:style-name', 'AntragsgruenSub');
                             }
                         }
