@@ -80,7 +80,6 @@ class Text extends Base
      */
     protected function html2ooNodeInt($srcNode, $lineNumbered, $inP)
     {
-        $retNodes = [];
         switch ($srcNode->nodeType) {
             case XML_ELEMENT_NODE:
                 /** @var \DOMElement $srcNode */
@@ -173,7 +172,7 @@ class Text extends Base
                         } else {
                             $dstEl = $this->createNodeWithBaseStyle('p', $lineNumbered);
                         }
-                        $inP   = true;
+                        $inP = true;
                         break;
                     case 'blockquote':
                         $dstEl = $this->createNodeWithBaseStyle('p', $lineNumbered);
@@ -224,6 +223,7 @@ class Text extends Base
                     default:
                         throw new \Exception('Unknown Tag: ' . $srcNode->nodeName);
                 }
+
                 foreach ($srcNode->childNodes as $child) {
                     /** @var \DOMNode $child */
                     if ($this->DEBUG) {
@@ -231,24 +231,23 @@ class Text extends Base
                     }
 
                     $dstNodes = $this->html2ooNodeInt($child, $lineNumbered, $inP);
-                    if ($this->DEBUG) {
-                        echo "CHILD";
-                        var_dump($dstNodes);
-                    }
-                    if ($dstNodes) {
-                        foreach ($dstNodes as $dstNode) {
-                            if ($needsIntermediateP && !in_array(strtolower($child->nodeName), ['p', 'ul', 'ol'])) {
-                                $appendNode = $this->getNextNodeTemplate($lineNumbered);
-                                $appendNode->appendChild($dstNode);
-                                $dstEl->appendChild($appendNode);
-                            } else {
-                                $dstEl->appendChild($dstNode);
-                            }
-                        }
+                    foreach ($dstNodes as $dstNode) {
+                        $dstEl->appendChild($dstNode);
                     }
                 }
-                $retNodes[] = $dstEl;
-                break;
+
+                if ($needsIntermediateP && count($dstEl->childNodes) > 0) {
+                    if (!in_array(strtolower($dstEl->childNodes[0]->nodeName), ['p', 'ul', 'ol'])) {
+                        $appendNode = $this->getNextNodeTemplate($lineNumbered);
+                        while ($dstEl->firstChild) {
+                            $el = $dstEl->firstChild;
+                            $dstEl->removeChild($el);
+                            $appendNode->appendChild($el);
+                        }
+                        $dstEl->appendChild($appendNode);
+                    }
+                }
+                return [$dstEl];
             case XML_TEXT_NODE:
                 /** @var \DOMText $srcNode */
                 $textnode       = new \DOMText();
@@ -256,20 +255,18 @@ class Text extends Base
                 if ($this->DEBUG) {
                     echo 'Text<br>';
                 }
-                $retNodes[] = $textnode;
+                return [$textnode];
                 break;
             case XML_DOCUMENT_TYPE_NODE:
                 if ($this->DEBUG) {
                     echo 'Type Node<br>';
                 }
-                break;
+                return [];
             default:
                 if ($this->DEBUG) {
                     echo 'Unknown Node: ' . $srcNode->nodeType . '<br>';
                 }
         }
-
-        return $retNodes;
     }
 
     /**
