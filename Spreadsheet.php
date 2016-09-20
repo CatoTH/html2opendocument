@@ -465,6 +465,27 @@ class Spreadsheet extends Base
             case 'p':
             case 'div':
             case 'blockquote':
+                if ($node->hasAttribute('class')) {
+                    $classes = explode(' ', $node->getAttribute('class'));
+                    if (in_array('underline', $classes)) {
+                        $currentFormats[] = static::FORMAT_UNDERLINED;
+                    }
+                    if (in_array('strike', $classes)) {
+                        $currentFormats[] = static::FORMAT_STRIKE;
+                    }
+                    if (in_array('ins', $classes)) {
+                        $currentFormats[] = static::FORMAT_INS;
+                    }
+                    if (in_array('inserted', $classes)) {
+                        $currentFormats[] = static::FORMAT_INS;
+                    }
+                    if (in_array('del', $classes)) {
+                        $currentFormats[] = static::FORMAT_DEL;
+                    }
+                    if (in_array('deleted', $classes)) {
+                        $currentFormats[] = static::FORMAT_DEL;
+                    }
+                }
                 break;
             case 'ul':
             case 'ol':
