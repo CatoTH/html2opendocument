@@ -84,7 +84,7 @@ class Text extends Base
             case XML_ELEMENT_NODE:
                 /** @var \DOMElement $srcNode */
                 if ($this->DEBUG) {
-                    echo "Element - " . $srcNode->nodeName . " / Children: " . count($srcNode->childNodes) . "<br>";
+                    echo "Element - " . $srcNode->nodeName . " / Children: " . $srcNode->childNodes->length . "<br>";
                 }
                 $needsIntermediateP = false;
                 switch ($srcNode->nodeName) {
@@ -178,7 +178,7 @@ class Text extends Base
                         $dstEl = $this->createNodeWithBaseStyle('p', $lineNumbered);
                         $class = ($lineNumbered ? 'Blockquote_Linenumbered' : 'Blockquote');
                         $dstEl->setAttribute('text:style-name', 'Antragsgrün_20_' . $class);
-                        if (count($srcNode->childNodes) == 1) {
+                        if ($srcNode->childNodes->length == 1) {
                             foreach ($srcNode->childNodes as $child) {
                                 if ($child->nodeName == 'p') {
                                     $srcNode = $child;
@@ -236,8 +236,8 @@ class Text extends Base
                     }
                 }
 
-                if ($needsIntermediateP && count($dstEl->childNodes) > 0) {
-                    if (!in_array(strtolower($dstEl->childNodes[0]->nodeName), ['p', 'ul', 'ol'])) {
+                if ($needsIntermediateP && $dstEl->childNodes->length > 0) {
+                    if (!in_array(strtolower($dstEl->childNodes->item(0)->nodeName), ['p', 'ul', 'ol'])) {
                         $appendNode = $this->getNextNodeTemplate($lineNumbered);
                         while ($dstEl->firstChild) {
                             $el = $dstEl->firstChild;
