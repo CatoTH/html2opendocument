@@ -22,6 +22,9 @@ class Text extends Base
     /** @var array */
     private $textBlocks = [];
 
+    const STYLE_INS = 'ins';
+    const STYLE_DEL = 'del';
+
     /**
      * @param array $options
      *
@@ -71,14 +74,84 @@ class Text extends Base
     }
 
     /**
+     * @param \DOMElement $element
+     * @return string[]
+     */
+    protected static function getCSSClasses(\DOMElement $element)
+    {
+        if ($element->hasAttribute('class')) {
+            return explode(' ', $element->getAttribute('class'));
+        } else {
+            return [];
+        }
+    }
+
+    /**
+     * @param \DOMElement $element
+     * @param string[] $parentStyles
+     * @return string[]
+     */
+    protected static function getChildStyles(\DOMElement $element, $parentStyles = [])
+    {
+        $classes = static::getCSSClasses($element);
+        $childStyles = $parentStyles;
+        if (in_array('ins', $classes)) {
+            $childStyles[] = static::STYLE_INS;
+        }
+        if (in_array('inserted', $classes)) {
+            $childStyles[] = static::STYLE_INS;
+        }
+        if (in_array('del', $classes)) {
+            $childStyles[] = static::STYLE_DEL;
+        }
+        if (in_array('deleted', $classes)) {
+            $childStyles[] = static::STYLE_DEL;
+        }
+        return array_unique($childStyles);
+    }
+
+    /**
+     * @param string[] $classes
+     */
+    protected static function cssClassesToInternalClass($classes)
+    {
+        if (in_array('underline', $classes)) {
+            return 'AntragsgruenUnderlined';
+        }
+        if (in_array('strike', $classes)) {
+            return 'AntragsgruenStrike';
+        }
+        if (in_array('ins', $classes)) {
+            return 'AntragsgruenIns';
+        }
+        if (in_array('inserted', $classes)) {
+            return 'AntragsgruenIns';
+        }
+        if (in_array('del', $classes)) {
+            return 'AntragsgruenDel';
+        }
+        if (in_array('deleted', $classes)) {
+            return 'AntragsgruenDel';
+        }
+        if (in_array('superscript', $classes)) {
+            return 'AntragsgruenSup';
+        }
+        if (in_array('subscript', $classes)) {
+            return 'AntragsgruenSub';
+        }
+        return null;
+    }
+
+    /**
      * @param \DOMNode $srcNode
      * @param bool $lineNumbered
      * @param bool $inP
+     * @param string[]   $parentStyles
      *
      * @return \DOMNode[]
      * @throws \Exception
      */
-    protected function html2ooNodeInt($srcNode, $lineNumbered, $inP)
+    protected function html2ooNodeInt($srcNode, $lineNumbered, $inP, $parentStyles = [])
     {
         switch ($srcNode->nodeType) {
             case XML_ELEMENT_NODE:
@@ -87,35 +160,13 @@ class Text extends Base
                     echo "Element - " . $srcNode->nodeName . " / Children: " . $srcNode->childNodes->length . "<br>";
                 }
                 $needsIntermediateP = false;
+                $childStyles        = $parentStyles;
                 switch ($srcNode->nodeName) {
                     case 'span':
-                        $dstEl = $this->doc->createElementNS(static::NS_TEXT, 'span');
-                        if ($srcNode->hasAttribute('class')) {
-                            $classes = explode(' ', $srcNode->getAttribute('class'));
-                            if (in_array('underline', $classes)) {
-                                $dstEl->setAttribute('text:style-name', 'AntragsgruenUnderlined');
-                            }
-                            if (in_array('strike', $classes)) {
-                                $dstEl->setAttribute('text:style-name', 'AntragsgruenStrike');
-                            }
-                            if (in_array('ins', $classes)) {
-                                $dstEl->setAttribute('text:style-name', 'AntragsgruenIns');
-                            }
-                            if (in_array('inserted', $classes)) {
-                                $dstEl->setAttribute('text:style-name', 'AntragsgruenIns');
-                            }
-                            if (in_array('del', $classes)) {
-                                $dstEl->setAttribute('text:style-name', 'AntragsgruenDel');
-                            }
-                            if (in_array('deleted', $classes)) {
-                                $dstEl->setAttribute('text:style-name', 'AntragsgruenDel');
-                            }
-                            if (in_array('superscript', $classes)) {
-                                $dstEl->setAttribute('text:style-name', 'AntragsgruenSup');
-                            }
-                            if (in_array('subscript', $classes)) {
-                                $dstEl->setAttribute('text:style-name', 'AntragsgruenSub');
-                            }
+                        $dstEl    = $this->doc->createElementNS(static::NS_TEXT, 'span');
+                        $intClass = static::cssClassesToInternalClass(static::getCSSClasses($srcNode));
+                        if ($intClass) {
+                            $dstEl->setAttribute('text:style-name', $intClass);
                         }
                         break;
                     case 'b':
@@ -166,13 +217,27 @@ class Text extends Base
                         }
                         break;
                     case 'p':
-                    case 'div':
                         if ($inP) {
                             $dstEl = $this->createNodeWithBaseStyle('span', $lineNumbered);
                         } else {
                             $dstEl = $this->createNodeWithBaseStyle('p', $lineNumbered);
                         }
-                        $inP = true;
+                        if (in_array(static::STYLE_INS, $parentStyles)) {
+                            $dstEl->setAttribute('text:style-name', 'AntragsgruenIns');
+                        }
+                        if (in_array(static::STYLE_DEL, $parentStyles)) {
+                            $dstEl->setAttribute('text:style-name', 'AntragsgruenDel');
+                        }
+                        $intClass = static::cssClassesToInternalClass(static::getCSSClasses($srcNode));
+                        if ($intClass) {
+                            $dstEl->setAttribute('text:style-name', $intClass);
+                        }
+                        $inP      = true;
+                        break;
+                    case 'div':
+                        // We're basically ignoring DIVs here, as there is no corresponding element in OpenDocument
+                        // Therefore no support for styles and classes set on DIVs yet.
+                        $dstEl = null;
                         break;
                     case 'blockquote':
                         $dstEl = $this->createNodeWithBaseStyle('p', $lineNumbered);
@@ -188,13 +253,16 @@ class Text extends Base
                         $inP = true;
                         break;
                     case 'ul':
-                        $dstEl = $this->doc->createElementNS(static::NS_TEXT, 'list');
+                        $dstEl       = $this->doc->createElementNS(static::NS_TEXT, 'list');
+                        $childStyles = static::getChildStyles($srcNode, $parentStyles);
                         break;
                     case 'ol':
-                        $dstEl = $this->doc->createElementNS(static::NS_TEXT, 'list');
+                        $dstEl       = $this->doc->createElementNS(static::NS_TEXT, 'list');
+                        $childStyles = static::getChildStyles($srcNode, $parentStyles);
                         break;
                     case 'li':
                         $dstEl              = $this->doc->createElementNS(static::NS_TEXT, 'list-item');
+                        $childStyles        = static::getChildStyles($srcNode, $parentStyles);
                         $needsIntermediateP = true;
                         $inP                = true;
                         break;
@@ -224,13 +292,30 @@ class Text extends Base
                         throw new \Exception('Unknown Tag: ' . $srcNode->nodeName);
                 }
 
+
+                if ($dstEl === null) {
+                    $ret = [];
+                    foreach ($srcNode->childNodes as $child) {
+                        /** @var \DOMNode $child */
+                        if ($this->DEBUG) {
+                            echo "CHILD<br>" . $child->nodeType . "<br>";
+                        }
+
+                        $dstNodes = $this->html2ooNodeInt($child, $lineNumbered, $inP, $childStyles);
+                        foreach ($dstNodes as $dstNode) {
+                            $ret[] = $dstNode;
+                        }
+                    }
+                    return $ret;
+                }
+
                 foreach ($srcNode->childNodes as $child) {
                     /** @var \DOMNode $child */
                     if ($this->DEBUG) {
                         echo "CHILD<br>" . $child->nodeType . "<br>";
                     }
 
-                    $dstNodes = $this->html2ooNodeInt($child, $lineNumbered, $inP);
+                    $dstNodes = $this->html2ooNodeInt($child, $lineNumbered, $inP, $childStyles);
                     foreach ($dstNodes as $dstNode) {
                         $dstEl->appendChild($dstNode);
                     }
@@ -282,6 +367,7 @@ class Text extends Base
             echo print_r(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS), true);
             die();
         }
+
         $body = $this->html2DOM($html);
 
         $retNodes = [];
@@ -346,7 +432,7 @@ class Text extends Base
             'style:text-line-through-type'  => 'single',
         ]);
         $this->appendTextStyleNode('AntragsgruenIns', [
-            'fo:color'                   => '#00ff00',
+            'fo:color'                   => '#008800',
             'style:text-underline-style' => 'solid',
             'style:text-underline-width' => 'auto',
             'style:text-underline-color' => 'font-color',
@@ -355,7 +441,7 @@ class Text extends Base
             'style:font-weight-complex'  => 'bold',
         ]);
         $this->appendTextStyleNode('AntragsgruenDel', [
-            'fo:color'                      => '#ff0000',
+            'fo:color'                      => '#880000',
             'style:text-line-through-style' => 'solid',
             'style:text-line-through-type'  => 'single',
             'fo:font-style'                 => 'italic',
