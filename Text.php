@@ -93,7 +93,7 @@ class Text extends Base
      */
     protected static function getChildStyles(\DOMElement $element, $parentStyles = [])
     {
-        $classes = static::getCSSClasses($element);
+        $classes     = static::getCSSClasses($element);
         $childStyles = $parentStyles;
         if (in_array('ins', $classes)) {
             $childStyles[] = static::STYLE_INS;
@@ -140,6 +140,46 @@ class Text extends Base
             return 'AntragsgruenSub';
         }
         return null;
+    }
+
+    /**
+     * Wraps all child nodes with text:p nodes, if necessary
+     * (it's not necessary for child nodes that are p's themselves or lists)
+     *
+     * @param \DOMElement $el
+     * @param boolean $lineNumbered
+     *
+     * @return \DOMElement
+     */
+    protected function wrapChildrenWithP(\DOMElement $parentEl, $lineNumbered)
+    {
+        $childNodes = [];
+        while ($parentEl->childNodes->length > 0) {
+            $el = $parentEl->firstChild;
+            $parentEl->removeChild($el);
+            $childNodes[] = $el;
+        }
+
+        $appendNode = null;
+        foreach ($childNodes as $childNode) {
+            if (in_array(strtolower($childNode->nodeName), ['p', 'list'])) {
+                if ($appendNode) {
+                    $parentEl->appendChild($appendNode);
+                    $appendNode = null;
+                }
+                $parentEl->appendChild($childNode);
+            } else {
+                if (!$appendNode) {
+                    $appendNode = $this->getNextNodeTemplate($lineNumbered);
+                }
+                $appendNode->appendChild($childNode);
+            }
+        }
+        if ($appendNode) {
+            $parentEl->appendChild($appendNode);
+        }
+
+        return $parentEl;
     }
 
     /**
@@ -232,7 +272,7 @@ class Text extends Base
                         if ($intClass) {
                             $dstEl->setAttribute('text:style-name', $intClass);
                         }
-                        $inP      = true;
+                        $inP = true;
                         break;
                     case 'div':
                         // We're basically ignoring DIVs here, as there is no corresponding element in OpenDocument
@@ -322,15 +362,7 @@ class Text extends Base
                 }
 
                 if ($needsIntermediateP && $dstEl->childNodes->length > 0) {
-                    if (!in_array(strtolower($dstEl->childNodes->item(0)->nodeName), ['p', 'ul', 'ol'])) {
-                        $appendNode = $this->getNextNodeTemplate($lineNumbered);
-                        while ($dstEl->firstChild) {
-                            $el = $dstEl->firstChild;
-                            $dstEl->removeChild($el);
-                            $appendNode->appendChild($el);
-                        }
-                        $dstEl->appendChild($appendNode);
-                    }
+                    $dstEl = static::wrapChildrenWithP($dstEl, $lineNumbered);
                 }
                 return [$dstEl];
             case XML_TEXT_NODE:
