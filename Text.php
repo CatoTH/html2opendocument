@@ -200,7 +200,7 @@ class Text extends Base
                     echo "Element - " . $srcNode->nodeName . " / Children: " . $srcNode->childNodes->length . "<br>";
                 }
                 $needsIntermediateP = false;
-                $childStyles        = $parentStyles;
+                $childStyles        = static::getChildStyles($srcNode, $parentStyles);
                 switch ($srcNode->nodeName) {
                     case 'span':
                         $dstEl    = $this->doc->createElementNS(static::NS_TEXT, 'span');
@@ -262,12 +262,6 @@ class Text extends Base
                         } else {
                             $dstEl = $this->createNodeWithBaseStyle('p', $lineNumbered);
                         }
-                        if (in_array(static::STYLE_INS, $parentStyles)) {
-                            $dstEl->setAttribute('text:style-name', 'AntragsgruenIns');
-                        }
-                        if (in_array(static::STYLE_DEL, $parentStyles)) {
-                            $dstEl->setAttribute('text:style-name', 'AntragsgruenDel');
-                        }
                         $intClass = static::cssClassesToInternalClass(static::getCSSClasses($srcNode));
                         if ($intClass) {
                             $dstEl->setAttribute('text:style-name', $intClass);
@@ -293,16 +287,13 @@ class Text extends Base
                         $inP = true;
                         break;
                     case 'ul':
-                        $dstEl       = $this->doc->createElementNS(static::NS_TEXT, 'list');
-                        $childStyles = static::getChildStyles($srcNode, $parentStyles);
+                        $dstEl = $this->doc->createElementNS(static::NS_TEXT, 'list');
                         break;
                     case 'ol':
-                        $dstEl       = $this->doc->createElementNS(static::NS_TEXT, 'list');
-                        $childStyles = static::getChildStyles($srcNode, $parentStyles);
+                        $dstEl = $this->doc->createElementNS(static::NS_TEXT, 'list');
                         break;
                     case 'li':
                         $dstEl              = $this->doc->createElementNS(static::NS_TEXT, 'list-item');
-                        $childStyles        = static::getChildStyles($srcNode, $parentStyles);
                         $needsIntermediateP = true;
                         $inP                = true;
                         break;
@@ -371,6 +362,18 @@ class Text extends Base
                 $textnode->data = $srcNode->data;
                 if ($this->DEBUG) {
                     echo 'Text<br>';
+                }
+                if (in_array(static::STYLE_DEL, $parentStyles)) {
+                    $dstEl = $this->createNodeWithBaseStyle('span', $lineNumbered);
+                    $dstEl->setAttribute('text:style-name', 'AntragsgruenDel');
+                    $dstEl->appendChild($textnode);
+                    $textnode = $dstEl;
+                }
+                if (in_array(static::STYLE_INS, $parentStyles)) {
+                    $dstEl = $this->createNodeWithBaseStyle('span', $lineNumbered);
+                    $dstEl->setAttribute('text:style-name', 'AntragsgruenIns');
+                    $dstEl->appendChild($textnode);
+                    $textnode = $dstEl;
                 }
                 return [$textnode];
                 break;
