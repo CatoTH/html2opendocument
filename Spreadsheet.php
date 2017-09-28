@@ -258,7 +258,7 @@ class Spreadsheet extends Base
                             $elementP              = $this->doc->createElementNS(static::NS_TEXT, 'p');
                             $elementP->textContent = $cell['content'];
                             $currentCell->appendChild($elementP);
-                            $currentCell->setAttribute('calctext:value-type', 'float');
+                            $currentCell->setAttribute('calcext:value-type', 'float');
                             $currentCell->setAttribute('office:value-type', 'float');
                             $currentCell->setAttribute('office:value', (string)$cell['content']);
                             break;
