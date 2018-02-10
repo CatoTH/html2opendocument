@@ -110,9 +110,11 @@ class Text extends Base
         return array_unique($childStyles);
     }
 
-    /**
-     * @param string[] $classes
-     */
+	/**
+	 * @param string[] $classes
+	 *
+	 * @return null|string
+	 */
     protected static function cssClassesToInternalClass($classes)
     {
         if (in_array('underline', $classes)) {
@@ -146,7 +148,7 @@ class Text extends Base
      * Wraps all child nodes with text:p nodes, if necessary
      * (it's not necessary for child nodes that are p's themselves or lists)
      *
-     * @param \DOMElement $el
+     * @param \DOMElement $parentEl
      * @param boolean $lineNumbered
      *
      * @return \DOMElement
@@ -386,15 +388,17 @@ class Text extends Base
                 if ($this->DEBUG) {
                     echo 'Unknown Node: ' . $srcNode->nodeType . '<br>';
                 }
+                return [];
         }
     }
 
-    /**
-     * @param string $html
-     * @param bool $lineNumbered
-     *
-     * @return \DOMNode[]
-     */
+	/**
+	 * @param string $html
+	 * @param bool $lineNumbered
+	 *
+	 * @return \DOMNode[]
+	 * @throws \Exception
+	 */
     protected function html2ooNodes($html, $lineNumbered)
     {
         if (!is_string($html)) {
@@ -442,9 +446,10 @@ class Text extends Base
         return $retNodes;
     }
 
-    /**
-     * @return string
-     */
+	/**
+	 * @return string
+	 * @throws \Exception
+	 */
     public function create()
     {
         $this->appendTextStyleNode('AntragsgruenBold', [

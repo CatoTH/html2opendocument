@@ -352,11 +352,12 @@ class Spreadsheet extends Base
                 $currentCell->setAttribute('table:style-name', $styleId);
             }
         }
-
+	    /*
         foreach ($this->cellStylesMatrix as $rowNr => $row) {
             foreach ($row as $colNr => $cell) {
             }
         }
+	    */
     }
 
     /**
