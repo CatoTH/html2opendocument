@@ -204,13 +204,6 @@ class Text extends Base
                 $needsIntermediateP = false;
                 $childStyles        = static::getChildStyles($srcNode, $parentStyles);
                 switch ($srcNode->nodeName) {
-                    case 'span':
-                        $dstEl    = $this->doc->createElementNS(static::NS_TEXT, 'span');
-                        $intClass = static::cssClassesToInternalClass(static::getCSSClasses($srcNode));
-                        if ($intClass) {
-                            $dstEl->setAttribute('text:style-name', $intClass);
-                        }
-                        break;
                     case 'b':
                     case 'strong':
                         $dstEl = $this->doc->createElementNS(static::NS_TEXT, 'span');
@@ -321,8 +314,14 @@ class Text extends Base
                         $dstEl->setAttribute('text:style-name', 'Antragsgrün_20_H4');
                         $inP = true;
                         break;
+                    case 'span':
                     default:
-                        throw new \Exception('Unknown Tag: ' . $srcNode->nodeName);
+                        $dstEl    = $this->doc->createElementNS(static::NS_TEXT, 'span');
+                        $intClass = static::cssClassesToInternalClass(static::getCSSClasses($srcNode));
+                        if ($intClass) {
+                            $dstEl->setAttribute('text:style-name', $intClass);
+                        }
+                        break;
                 }
 
 

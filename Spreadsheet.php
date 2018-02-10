@@ -412,35 +412,6 @@ class Spreadsheet extends Base
     protected function node2Formatting(\DOMElement $node, $currentFormats)
     {
         switch ($node->nodeName) {
-            case 'span':
-                if ($node->hasAttribute('class')) {
-                    $classes = explode(' ', $node->getAttribute('class'));
-                    if (in_array('underline', $classes)) {
-                        $currentFormats[] = static::FORMAT_UNDERLINED;
-                    }
-                    if (in_array('strike', $classes)) {
-                        $currentFormats[] = static::FORMAT_STRIKE;
-                    }
-                    if (in_array('ins', $classes)) {
-                        $currentFormats[] = static::FORMAT_INS;
-                    }
-                    if (in_array('inserted', $classes)) {
-                        $currentFormats[] = static::FORMAT_INS;
-                    }
-                    if (in_array('del', $classes)) {
-                        $currentFormats[] = static::FORMAT_DEL;
-                    }
-                    if (in_array('deleted', $classes)) {
-                        $currentFormats[] = static::FORMAT_DEL;
-                    }
-                    if (in_array('superscript', $classes)) {
-                        $currentFormats[] = static::FORMAT_SUP;
-                    }
-                    if (in_array('subscript', $classes)) {
-                        $currentFormats[] = static::FORMAT_SUB;
-                    }
-                }
-                break;
             case 'b':
             case 'strong':
                 $currentFormats[] = static::FORMAT_BOLD;
@@ -533,8 +504,36 @@ class Spreadsheet extends Base
                 } catch (\Exception $e) {
                 }
                 break;
+            case 'span':
             default:
-                die('Unknown Tag: ' . $node->nodeName);
+                if ($node->hasAttribute('class')) {
+                    $classes = explode(' ', $node->getAttribute('class'));
+                    if (in_array('underline', $classes)) {
+                        $currentFormats[] = static::FORMAT_UNDERLINED;
+                    }
+                    if (in_array('strike', $classes)) {
+                        $currentFormats[] = static::FORMAT_STRIKE;
+                    }
+                    if (in_array('ins', $classes)) {
+                        $currentFormats[] = static::FORMAT_INS;
+                    }
+                    if (in_array('inserted', $classes)) {
+                        $currentFormats[] = static::FORMAT_INS;
+                    }
+                    if (in_array('del', $classes)) {
+                        $currentFormats[] = static::FORMAT_DEL;
+                    }
+                    if (in_array('deleted', $classes)) {
+                        $currentFormats[] = static::FORMAT_DEL;
+                    }
+                    if (in_array('superscript', $classes)) {
+                        $currentFormats[] = static::FORMAT_SUP;
+                    }
+                    if (in_array('subscript', $classes)) {
+                        $currentFormats[] = static::FORMAT_SUB;
+                    }
+                }
+                break;
         }
         return $currentFormats;
     }
