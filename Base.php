@@ -50,7 +50,11 @@ abstract class Base
         if (isset($options['trustHtml'])) {
             $this->trustHtml = ($options['trustHtml'] == true);
         }
-
+        
+        if(!file_exists($this->tmpPath)){
+            mkdir($this->tmpPath);
+        }
+        
         $this->tmpZipFile = $this->tmpPath . uniqid('zip-');
         file_put_contents($this->tmpZipFile, $template);
 
