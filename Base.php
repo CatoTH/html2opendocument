@@ -35,6 +35,14 @@ abstract class Base
     /** @var @string */
     private $tmpZipFile;
 
+    /** @var null|string */
+    protected $pageWidth        = null;
+    protected $pageHeight       = null;
+    protected $printOrientation = null;
+    protected $marginTop        = null;
+    protected $marginLeft       = null;
+    protected $marginRight      = null;
+    protected $marginBottom     = null;
 
     /**
      * @param string $templateFile
@@ -79,11 +87,57 @@ abstract class Base
 
         $this->zip->deleteName('content.xml');
         $this->zip->addFromString('content.xml', $content);
+
+        $this->writePageStyles();
+
         $this->zip->close();
 
         $content = file_get_contents($this->tmpZipFile);
         unlink($this->tmpZipFile);
         return $content;
+    }
+
+    /**
+     */
+    protected function writePageStyles()
+    {
+        $stylesStr = $this->zip->getFromName('styles.xml');
+        $styles = new \DOMDocument();
+        $styles->loadXML($stylesStr);
+
+        foreach ($styles->getElementsByTagNameNS(static::NS_STYLE, 'page-layout-properties') as $element) {
+            /** @var \DOMElement $element */
+            if ($this->pageWidth) {
+                $element->setAttribute('fo:page-width', $this->pageWidth);
+            }
+            if ($this->pageHeight) {
+                $element->setAttribute('fo:page-height', $this->pageHeight);
+            }
+            if ($this->printOrientation) {
+                $element->setAttribute('style:print-orientation', $this->printOrientation);
+            }
+            if ($this->marginTop) {
+                $element->setAttribute('fo:margin-top', $this->marginTop);
+            }
+            if ($this->marginLeft) {
+                $element->setAttribute('fo:margin-left', $this->marginLeft);
+            }
+            if ($this->marginRight) {
+                $element->setAttribute('fo:margin-right', $this->marginRight);
+            }
+            if ($this->marginBottom) {
+                $element->setAttribute('fo:margin-bottom', $this->marginBottom);
+            }
+        }
+
+        $xml = $styles->saveXML();
+
+        $rows = explode("\n", $xml);
+        $rows[0] .= "\n";
+        $stylesStr = implode('', $rows) . "\n";
+
+        $this->zip->deleteName('styles.xml');
+        $this->zip->addFromString('styles.xml', $stylesStr);
     }
 
     /**
@@ -190,5 +244,31 @@ abstract class Base
     protected function appendParagraphStyleNode($styleName, $attributes)
     {
         $this->appendStyleNode($styleName, 'paragraph', 'paragraph-properties', $attributes);
+    }
+
+    /**
+     * @param string $top (e.g. "20mm")
+     * @param string $left
+     * @param string $right
+     * @param string $bottom
+     */
+    public function setMargins($top, $left, $right, $bottom)
+    {
+        $this->marginBottom = $bottom;
+        $this->marginLeft   = $left;
+        $this->marginRight  = $right;
+        $this->marginTop    = $top;
+    }
+
+    /**
+     * @param string $width (e.g. "297mm")
+     * @param string $height (e.g. "210mm")
+     * @param string $orientation (landscape or portrait)
+     */
+    public function setPageOrientation($width, $height, $orientation)
+    {
+        $this->pageHeight       = $height;
+        $this->pageWidth        = $width;
+        $this->printOrientation = $orientation;
     }
 }

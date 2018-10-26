@@ -46,6 +46,10 @@ require_once(__DIR__ . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'a
 
 $ods = new \CatoTH\HTML2OpenDocument\Spreadsheet();
 
+// Setting to landscape mode with custom page margins
+$ods->setMargins("20mm", "10mm", "10mm", "20mm");
+$ods->setPageOrientation("297mm", "210mm", "landscape");
+
 // Plain text
 $ods->setCell(0, 0, Spreadsheet::TYPE_TEXT, 'Plain text with native formatting');
 $ods->setCellStyle(0, 0, [], ['fo:font-weight' => 'bold']);
