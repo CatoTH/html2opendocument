@@ -59,6 +59,9 @@ class Spreadsheet extends Base
 
     protected $classCache = [];
 
+    /** @var null|\Closure */
+    protected $preSaveHook = null;
+
     /**
      * @param array $options
      * @throws \Exception
@@ -672,6 +675,10 @@ class Spreadsheet extends Base
         return $nodes;
     }
 
+    public function setPreSaveHook(callable $cb) {
+        $this->preSaveHook = $cb;
+    }
+
 
     /**
      * @return string
@@ -684,6 +691,10 @@ class Spreadsheet extends Base
         $this->setCellContent();
         $this->setRowStyles();
         $this->setCellStyles();
+
+        if ($this->preSaveHook !== null) {
+            call_user_func($this->preSaveHook, $this->doc);
+        }
 
         $xml = $this->doc->saveXML();
 

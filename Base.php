@@ -13,7 +13,9 @@ abstract class Base
     const NS_OFFICE   = 'urn:oasis:names:tc:opendocument:xmlns:office:1.0';
     const NS_TEXT     = 'urn:oasis:names:tc:opendocument:xmlns:text:1.0';
     const NS_FO       = 'urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0';
+    const NS_DRAW     = 'urn:oasis:names:tc:opendocument:xmlns:drawing:1.0';
     const NS_STYLE    = 'urn:oasis:names:tc:opendocument:xmlns:style:1.0';
+    const NS_SVG      = 'urn:oasis:names:tc:opendocument:xmlns:svg-compatible:1.0';
     const NS_TABLE    = 'urn:oasis:names:tc:opendocument:xmlns:table:1.0';
     const NS_CALCTEXT = 'urn:org:documentfoundation:names:experimental:calc:xmlns:calcext:1.0';
     const NS_XLINK    = 'http://www.w3.org/1999/xlink';
@@ -58,11 +60,11 @@ abstract class Base
         if (isset($options['trustHtml'])) {
             $this->trustHtml = ($options['trustHtml'] == true);
         }
-        
+
         if(!file_exists($this->tmpPath)){
             mkdir($this->tmpPath);
         }
-        
+
         $this->tmpZipFile = $this->tmpPath . uniqid('zip-');
         file_put_contents($this->tmpZipFile, $template);
 

@@ -22,6 +22,9 @@ class Text extends Base
     /** @var array */
     private $textBlocks = [];
 
+    /** @var null|\Closure */
+    protected $preSaveHook = null;
+
     const STYLE_INS = 'ins';
     const STYLE_DEL = 'del';
 
@@ -445,6 +448,10 @@ class Text extends Base
         return $retNodes;
     }
 
+    public function setPreSaveHook(callable $cb) {
+        $this->preSaveHook = $cb;
+    }
+
 	/**
 	 * @return string
 	 * @throws \Exception
@@ -531,6 +538,10 @@ class Text extends Base
         }
 
         $this->nodeText->parentNode->removeChild($this->nodeText);
+
+        if ($this->preSaveHook !== null) {
+            call_user_func($this->preSaveHook, $this->doc);
+        }
 
         return $this->doc->saveXML();
     }
