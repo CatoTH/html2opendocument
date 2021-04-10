@@ -76,10 +76,7 @@ class Spreadsheet extends Base
         parent::__construct($templateFile, $options);
     }
 
-    /**
-     * @param string $filename
-     */
-    public function finishAndOutputOds($filename = '')
+    public function finishAndOutputOds(string $filename = ''): void
     {
         header('Content-Type: application/vnd.oasis.opendocument.spreadsheet');
         if ($filename != '') {
@@ -91,12 +88,7 @@ class Spreadsheet extends Base
         die();
     }
 
-    /**
-     * @param string $styleName
-     * @param array $cellAttributes
-     * @param array $textAttributes
-     */
-    protected function appendCellStyleNode($styleName, $cellAttributes, $textAttributes)
+    protected function appendCellStyleNode(string $styleName, array $cellAttributes, array $textAttributes): void
     {
         $node = $this->doc->createElementNS(static::NS_STYLE, "style");
         $node->setAttribute("style:name", $styleName);
@@ -124,29 +116,17 @@ class Spreadsheet extends Base
         }
     }
 
-
-    /**
-     * @param string $styleName
-     * @param array $attributes
-     */
-    protected function appendColStyleNode($styleName, $attributes)
+    protected function appendColStyleNode(string $styleName, array $attributes): void
     {
         $this->appendStyleNode($styleName, 'table-column', 'table-column-properties', $attributes);
     }
 
-    /**
-     * @param string $styleName
-     * @param array $attributes
-     */
-    protected function appendRowStyleNode($styleName, $attributes)
+    protected function appendRowStyleNode(string $styleName, array $attributes): void
     {
         $this->appendStyleNode($styleName, 'table-row', 'table-row-properties', $attributes);
     }
 
-    /**
-     * @param int $row
-     */
-    protected function initRow($row)
+    protected function initRow(int $row): void
     {
         if (!isset($this->matrix[$row])) {
             $this->matrix[$row] = [];
@@ -156,15 +136,7 @@ class Spreadsheet extends Base
         }
     }
 
-    /**
-     * @param int $row
-     * @param string $col
-     * @param int $contentType
-     * @param string $content
-     * @param null|string $cssClass
-     * @param null|string $styles
-     */
-    public function setCell($row, $col, $contentType, $content, $cssClass = null, $styles = null)
+    public function setCell(int $row, string $col, int $contentType, string $content, ?string $cssClass = null, ?array $styles = null): void
     {
         $this->initRow($row);
         if ($col > $this->matrixCols) {
@@ -178,23 +150,15 @@ class Spreadsheet extends Base
         ];
     }
 
-    /**
-     * @param int $col
-     * @param float $widthInCm
-     */
-    public function setColumnWidth($col, $widthInCm)
+    public function setColumnWidth(int $col, float $widthInCm)
     {
         $this->matrixColWidths[$col] = $widthInCm;
     }
 
-    /**
-     * @param int $row
-     * @param float $minHeightInCm
-     */
-    public function setMinRowHeight($row, $minHeightInCm)
+    public function setMinRowHeight(int $row, float $minHeightInCm)
     {
         $this->initRow($row);
-        $rowHeight = (isset($this->matrixRowHeights[$row]) ? $this->matrixRowHeights[$row] : 1);
+        $rowHeight = $this->matrixRowHeights[$row] ?? 1;
         if ($minHeightInCm > $rowHeight) {
             $rowHeight = $minHeightInCm;
         }
@@ -202,10 +166,9 @@ class Spreadsheet extends Base
     }
 
     /**
-     * @return \DOMElement
      * @throws \Exception
      */
-    protected function getCleanDomTable()
+    protected function getCleanDomTable(): \DOMElement
     {
         $domTables = $this->doc->getElementsByTagNameNS(static::NS_TABLE, 'table');
         if ($domTables->length != 1) {
@@ -222,9 +185,7 @@ class Spreadsheet extends Base
     }
 
 
-    /**
-     */
-    protected function setColStyles()
+    protected function setColStyles(): void
     {
         for ($col = 0; $col <= $this->matrixCols; $col++) {
             $element = $this->doc->createElementNS(static::NS_TABLE, 'table-column');
@@ -238,10 +199,7 @@ class Spreadsheet extends Base
         }
     }
 
-
-    /**
-     */
-    protected function setCellContent()
+    protected function setCellContent(): void
     {
         for ($row = 0; $row <= $this->matrixRows; $row++) {
             $this->cellNodeMatrix[$row] = [];
@@ -287,7 +245,7 @@ class Spreadsheet extends Base
                                 $height = 1;
                             } else {
                                 $wrap   = 'wrap';
-                                $width  = (isset($this->matrixColWidths[$col]) ? $this->matrixColWidths[$col] : 2);
+                                $width  = $this->matrixColWidths[$col] ?? 2;
                                 $height = (mb_strlen(strip_tags($this->matrix[$row][$col]['content'])) / ($width * 6));
                             }
                             $this->setCellStyle($row, $col, [
@@ -307,13 +265,7 @@ class Spreadsheet extends Base
         }
     }
 
-    /**
-     * @param int $row
-     * @param int $col
-     * @param null|array $cellAttributes
-     * @param null|array $textAttributes
-     */
-    public function setCellStyle($row, $col, $cellAttributes, $textAttributes)
+    public function setCellStyle(int $row, int $col, ?array $cellAttributes, ?array $textAttributes): void
     {
         if (!isset($this->cellStylesMatrix[$row])) {
             $this->cellStylesMatrix[$row] = [];
@@ -333,9 +285,7 @@ class Spreadsheet extends Base
         }
     }
 
-    /**
-     */
-    public function setCellStyles()
+    public function setCellStyles(): void
     {
         for ($row = 0; $row <= $this->matrixRows; $row++) {
             for ($col = 0; $col <= $this->matrixCols; $col++) {
@@ -379,14 +329,7 @@ class Spreadsheet extends Base
         }
     }
 
-    /**
-     * @param int $fromRow
-     * @param int $fromCol
-     * @param int $toRow
-     * @param int $toCol
-     * @param float $width
-     */
-    public function drawBorder($fromRow, $fromCol, $toRow, $toCol, $width)
+    public function drawBorder(int $fromRow, int $fromCol, int $toRow, int $toCol, float $width): void
     {
         for ($i = $fromRow; $i <= $toRow; $i++) {
             $this->setCellStyle($i, $fromCol, [
@@ -407,12 +350,7 @@ class Spreadsheet extends Base
         }
     }
 
-    /**
-     * @param \DOMElement $node
-     * @param array $currentFormats
-     * @return array
-     */
-    protected function node2Formatting(\DOMElement $node, $currentFormats)
+    protected function node2Formatting(\DOMElement $node, array $currentFormats): array
     {
         switch ($node->nodeName) {
             case 'b':
@@ -541,12 +479,7 @@ class Spreadsheet extends Base
         return $currentFormats;
     }
 
-    /**
-     * @param \DOMNode $node
-     * @param array $currentFormats
-     * @return array
-     */
-    protected function tokenizeFlattenHtml(\DOMNode $node, $currentFormats)
+    protected function tokenizeFlattenHtml(\DOMNode $node, array $currentFormats): array
     {
         $return = [];
         foreach ($node->childNodes as $child) {
@@ -583,11 +516,7 @@ class Spreadsheet extends Base
         return $return;
     }
 
-    /**
-     * @param array $formats
-     * @return string
-     */
-    protected function getClassByFormats($formats)
+    protected function getClassByFormats(array $formats): string
     {
         sort($formats);
         $key = implode('_', $formats);
@@ -601,13 +530,13 @@ class Spreadsheet extends Base
                 $name .= '_' . static::$FORMAT_NAMES[$format];
                 switch ($format) {
                     case static::FORMAT_INS:
-                        $styles['fo:color']                   = '#00ff00';
+                        $styles['fo:color']                   = $this->colorIns;
                         $styles['style:text-underline-style'] = 'solid';
                         $styles['style:text-underline-width'] = 'auto';
                         $styles['style:text-underline-color'] = 'font-color';
                         break;
                     case static::FORMAT_DEL:
-                        $styles['fo:color']                     = '#ff0000';
+                        $styles['fo:color']                     = $this->colorDel;
                         $styles['style:text-line-through-type'] = 'single';
                         break;
                     case static::FORMAT_BOLD:
@@ -644,11 +573,7 @@ class Spreadsheet extends Base
         return $this->classCache[$key];
     }
 
-    /**
-     * @param string $html
-     * @return array
-     */
-    public function html2OdsNodes($html)
+    public function html2OdsNodes(string $html): array
     {
         $body     = $this->html2DOM($html);
         $tokens   = $this->tokenizeFlattenHtml($body, []);
@@ -681,10 +606,9 @@ class Spreadsheet extends Base
 
 
     /**
-     * @return string
      * @throws \Exception
      */
-    public function create()
+    public function create(): string
     {
         $this->getCleanDomTable();
         $this->setColStyles();

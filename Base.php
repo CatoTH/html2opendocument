@@ -21,7 +21,7 @@ abstract class Base
     const NS_XLINK    = 'http://www.w3.org/1999/xlink';
 
 
-    /** @var \DOMDocument */
+    /** @var \DOMDocument|null */
     protected $doc = null;
 
     /** @var bool */
@@ -46,19 +46,24 @@ abstract class Base
     protected $marginRight      = null;
     protected $marginBottom     = null;
 
+    /** @var string */
+    protected $colorIns         = '#008800';
+    protected $colorDel         = '#880000';
+
     /**
-     * @param string $templateFile
-     * @param array $options
      * @throws \Exception
      */
-    public function __construct($templateFile, $options = [])
+    public function __construct(string $templateFile, array $options = [])
     {
         $template = file_get_contents($templateFile);
-        if (isset($options['tmpPath']) && $options['tmpPath'] != '') {
+        if (isset($options['tmpPath']) && $options['tmpPath'] !== '') {
             $this->tmpPath = $options['tmpPath'];
         }
         if (isset($options['trustHtml'])) {
-            $this->trustHtml = ($options['trustHtml'] == true);
+            $this->trustHtml = ($options['trustHtml'] === true);
+        }
+        if (isset($options['colorIns'])) {
+            $this->colorIns = $options['colorIns'];
         }
 
         if(!file_exists($this->tmpPath)){
@@ -80,10 +85,7 @@ abstract class Base
 
     }
 
-    /**
-     * @return string
-     */
-    public function finishAndGetDocument()
+    public function finishAndGetDocument(): string
     {
         $content = $this->create();
 
@@ -99,9 +101,7 @@ abstract class Base
         return $content;
     }
 
-    /**
-     */
-    protected function writePageStyles()
+    protected function writePageStyles(): void
     {
         $stylesStr = $this->zip->getFromName('styles.xml');
         $styles = new \DOMDocument();
@@ -142,17 +142,9 @@ abstract class Base
         $this->zip->addFromString('styles.xml', $stylesStr);
     }
 
-    /**
-     * @return string
-     */
-    abstract function create();
+    abstract function create(): string;
 
-    /**
-     * @param string $html
-     * @param array $config
-     * @return string
-     */
-    protected function purifyHTML($html, $config)
+    protected function purifyHTML(string $html, array $config): string
     {
         $configInstance               = \HTMLPurifier_Config::create($config);
         $configInstance->autoFinalize = false;
@@ -162,11 +154,7 @@ abstract class Base
         return $purifier->purify($html);
     }
 
-    /**
-     * @param string $html
-     * @return \DOMNode
-     */
-    public function html2DOM($html)
+    public function html2DOM(string $html): \DOMNode
     {
         if (!$this->trustHtml) {
             $html = $this->purifyHTML(
@@ -188,17 +176,12 @@ abstract class Base
         return $bodies->item(0);
     }
 
-    /***
-     * @param bool $debug
-     */
-    public function setDebug($debug)
+    public function setDebug(bool $debug): void
     {
         $this->DEBUG = $debug;
     }
 
-    /**
-     */
-    public function debugOutput()
+    public function debugOutput(): void
     {
         $this->doc->preserveWhiteSpace = false;
         $this->doc->formatOutput       = true;
@@ -207,12 +190,9 @@ abstract class Base
     }
 
     /**
-     * @param string $styleName
-     * @param string $family
-     * @param string $element
      * @param string[] $attributes
      */
-    protected function appendStyleNode($styleName, $family, $element, $attributes)
+    protected function appendStyleNode(string $styleName, string $family, string $element, array $attributes): void
     {
         $node = $this->doc->createElementNS(static::NS_STYLE, 'style');
         $node->setAttribute('style:name', $styleName);
@@ -230,31 +210,20 @@ abstract class Base
         }
     }
 
-    /**
-     * @param string $styleName
-     * @param array $attributes
-     */
-    protected function appendTextStyleNode($styleName, $attributes)
+    protected function appendTextStyleNode(string $styleName, array $attributes): void
     {
         $this->appendStyleNode($styleName, 'text', 'text-properties', $attributes);
     }
 
-    /**
-     * @param string $styleName
-     * @param array $attributes
-     */
-    protected function appendParagraphStyleNode($styleName, $attributes)
+    protected function appendParagraphStyleNode(string $styleName, array $attributes): void
     {
         $this->appendStyleNode($styleName, 'paragraph', 'paragraph-properties', $attributes);
     }
 
     /**
      * @param string $top (e.g. "20mm")
-     * @param string $left
-     * @param string $right
-     * @param string $bottom
      */
-    public function setMargins($top, $left, $right, $bottom)
+    public function setMargins(string $top, string $left, string $right, string $bottom): void
     {
         $this->marginBottom = $bottom;
         $this->marginLeft   = $left;
@@ -267,7 +236,7 @@ abstract class Base
      * @param string $height (e.g. "210mm")
      * @param string $orientation (landscape or portrait)
      */
-    public function setPageOrientation($width, $height, $orientation)
+    public function setPageOrientation(string $width, string $height, string $orientation): void
     {
         $this->pageHeight       = $height;
         $this->pageWidth        = $width;

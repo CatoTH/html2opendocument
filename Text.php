@@ -29,11 +29,9 @@ class Text extends Base
     const STYLE_DEL = 'del';
 
     /**
-     * @param array $options
-     *
      * @throws \Exception
      */
-    public function __construct($options = [])
+    public function __construct(array $options = [])
     {
         if (isset($options['templateFile']) && $options['templateFile'] != '') {
             $templateFile = $options['templateFile'];
@@ -43,10 +41,7 @@ class Text extends Base
         parent::__construct($templateFile, $options);
     }
 
-    /**
-     * @param string $filename
-     */
-    public function finishAndOutputOdt($filename = '')
+    public function finishAndOutputOdt(string $filename = ''): void
     {
         header('Content-Type: application/vnd.oasis.opendocument.text');
         if ($filename != '') {
@@ -58,29 +53,20 @@ class Text extends Base
         die();
     }
 
-    /**
-     * @param string $search
-     * @param string $replace
-     */
-    public function addReplace($search, $replace)
+    public function addReplace(string $search, string $replace): void
     {
         $this->replaces[$search] = $replace;
     }
 
-    /**
-     * @param string $html
-     * @param bool $lineNumbered
-     */
-    public function addHtmlTextBlock($html, $lineNumbered = false)
+    public function addHtmlTextBlock(string $html, bool $lineNumbered = false)
     {
         $this->textBlocks[] = ['text' => $html, 'lineNumbered' => $lineNumbered];
     }
 
     /**
-     * @param \DOMElement $element
      * @return string[]
      */
-    protected static function getCSSClasses(\DOMElement $element)
+    protected static function getCSSClasses(\DOMElement $element): array
     {
         if ($element->hasAttribute('class')) {
             return explode(' ', $element->getAttribute('class'));
@@ -90,11 +76,10 @@ class Text extends Base
     }
 
     /**
-     * @param \DOMElement $element
      * @param string[] $parentStyles
      * @return string[]
      */
-    protected static function getChildStyles(\DOMElement $element, $parentStyles = [])
+    protected static function getChildStyles(\DOMElement $element, array $parentStyles = []): array
     {
         $classes     = static::getCSSClasses($element);
         $childStyles = $parentStyles;
@@ -115,10 +100,8 @@ class Text extends Base
 
 	/**
 	 * @param string[] $classes
-	 *
-	 * @return null|string
 	 */
-    protected static function cssClassesToInternalClass($classes)
+    protected static function cssClassesToInternalClass(array $classes): ?string
     {
         if (in_array('underline', $classes)) {
             return 'AntragsgruenUnderlined';
@@ -150,13 +133,8 @@ class Text extends Base
     /**
      * Wraps all child nodes with text:p nodes, if necessary
      * (it's not necessary for child nodes that are p's themselves or lists)
-     *
-     * @param \DOMElement $parentEl
-     * @param boolean $lineNumbered
-     *
-     * @return \DOMElement
      */
-    protected function wrapChildrenWithP(\DOMElement $parentEl, $lineNumbered)
+    protected function wrapChildrenWithP(\DOMElement $parentEl, bool $lineNumbered): \DOMElement
     {
         $childNodes = [];
         while ($parentEl->childNodes->length > 0) {
@@ -191,12 +169,12 @@ class Text extends Base
      * @param \DOMNode $srcNode
      * @param bool $lineNumbered
      * @param bool $inP
-     * @param string[]   $parentStyles
+     * @param string[] $parentStyles
      *
      * @return \DOMNode[]
      * @throws \Exception
      */
-    protected function html2ooNodeInt($srcNode, $lineNumbered, $inP, $parentStyles = [])
+    protected function html2ooNodeInt(\DOMNode $srcNode, bool $lineNumbered, bool $inP, array $parentStyles = []): array
     {
         switch ($srcNode->nodeType) {
             case XML_ELEMENT_NODE:
@@ -285,8 +263,6 @@ class Text extends Base
                         $inP = true;
                         break;
                     case 'ul':
-                        $dstEl = $this->doc->createElementNS(static::NS_TEXT, 'list');
-                        break;
                     case 'ol':
                         $dstEl = $this->doc->createElementNS(static::NS_TEXT, 'list');
                         break;
@@ -395,13 +371,10 @@ class Text extends Base
     }
 
 	/**
-	 * @param string $html
-	 * @param bool $lineNumbered
-	 *
 	 * @return \DOMNode[]
 	 * @throws \Exception
 	 */
-    protected function html2ooNodes($html, $lineNumbered)
+    protected function html2ooNodes(string $html, bool $lineNumbered): array
     {
         if (!is_string($html)) {
             echo print_r($html, true);
@@ -448,15 +421,14 @@ class Text extends Base
         return $retNodes;
     }
 
-    public function setPreSaveHook(callable $cb) {
+    public function setPreSaveHook(callable $cb): void {
         $this->preSaveHook = $cb;
     }
 
 	/**
-	 * @return string
 	 * @throws \Exception
 	 */
-    public function create()
+    public function create(): string
     {
         $this->appendTextStyleNode('AntragsgruenBold', [
             'fo:font-weight'            => 'bold',
@@ -478,7 +450,7 @@ class Text extends Base
             'style:text-line-through-type'  => 'single',
         ]);
         $this->appendTextStyleNode('AntragsgruenIns', [
-            'fo:color'                   => '#008800',
+            'fo:color'                   => $this->colorIns,
             'style:text-underline-style' => 'solid',
             'style:text-underline-width' => 'auto',
             'style:text-underline-color' => 'font-color',
@@ -487,7 +459,7 @@ class Text extends Base
             'style:font-weight-complex'  => 'bold',
         ]);
         $this->appendTextStyleNode('AntragsgruenDel', [
-            'fo:color'                      => '#880000',
+            'fo:color'                      => $this->colorDel,
             'style:text-line-through-style' => 'solid',
             'style:text-line-through-type'  => 'single',
             'fo:font-style'                 => 'italic',
@@ -546,12 +518,7 @@ class Text extends Base
         return $this->doc->saveXML();
     }
 
-    /**
-     * @param bool $lineNumbers
-     *
-     * @return \DOMNode
-     */
-    protected function getNextNodeTemplate($lineNumbers)
+    protected function getNextNodeTemplate(bool $lineNumbers): \DOMNode
     {
         $node = $this->nodeText->cloneNode();
         /** @var \DOMElement $node */
@@ -570,12 +537,9 @@ class Text extends Base
     }
 
     /**
-     * @param string $nodeType
-     * @param bool $lineNumbers
-     *
      * @return \DOMElement|\DOMNode
      */
-    protected function createNodeWithBaseStyle($nodeType, $lineNumbers)
+    protected function createNodeWithBaseStyle(string $nodeType, bool $lineNumbers)
     {
         $node = $this->doc->createElementNS(static::NS_TEXT, $nodeType);
         if ($lineNumbers) {

@@ -2,6 +2,7 @@ This is a simple PHP-library to create create OpenDocument Text- and Spreadsheet
 
 It does not support formulae / calculations in spreadsheets. The focus lies on formatted text.
 
+Please note that this library is mainly developed for [Antragsgrün](https://github.com/CatoTH/antragsgruen). For most other projects trying to write ODT and ODS files, [PhpSpreadsheet](https://phpspreadsheet.readthedocs.io/) will probably be the better choice.
 
 ## Example Scripts
 
