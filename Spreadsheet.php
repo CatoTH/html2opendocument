@@ -136,7 +136,12 @@ class Spreadsheet extends Base
         }
     }
 
-    public function setCell(int $row, string $col, int $contentType, string $content, ?string $cssClass = null, ?array $styles = null): void
+    /**
+     * @param mixed $content:
+     * - for contentType === Spreadsheet::TYPE_LINK: ['href' => $href, 'text' => $email]
+     * - for all other types: a string
+     */
+    public function setCell(int $row, string $col, int $contentType, $content, ?string $cssClass = null, ?array $styles = null): void
     {
         $this->initRow($row);
         if ($col > $this->matrixCols) {
