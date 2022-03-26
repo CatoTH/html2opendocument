@@ -141,7 +141,7 @@ class Spreadsheet extends Base
      * - for contentType === Spreadsheet::TYPE_LINK: ['href' => $href, 'text' => $email]
      * - for all other types: a string
      */
-    public function setCell(int $row, string $col, int $contentType, $content, ?string $cssClass = null, ?array $styles = null): void
+    public function setCell(int $row, int $col, int $contentType, $content, ?string $cssClass = null, ?array $styles = null): void
     {
         $this->initRow($row);
         if ($col > $this->matrixCols) {
@@ -155,12 +155,12 @@ class Spreadsheet extends Base
         ];
     }
 
-    public function setColumnWidth(int $col, float $widthInCm)
+    public function setColumnWidth(int $col, float $widthInCm): void
     {
         $this->matrixColWidths[$col] = $widthInCm;
     }
 
-    public function setMinRowHeight(int $row, float $minHeightInCm)
+    public function setMinRowHeight(int $row, float $minHeightInCm): void
     {
         $this->initRow($row);
         $rowHeight = $this->matrixRowHeights[$row] ?? 1;
@@ -318,9 +318,7 @@ class Spreadsheet extends Base
 	    */
     }
 
-    /**
-     */
-    public function setRowStyles()
+    public function setRowStyles(): void
     {
         foreach ($this->matrixRowHeights as $row => $height) {
             $styleName = 'Antragsgruen_row_' . $row;

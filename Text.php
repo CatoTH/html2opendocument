@@ -58,7 +58,7 @@ class Text extends Base
         $this->replaces[$search] = $replace;
     }
 
-    public function addHtmlTextBlock(string $html, bool $lineNumbered = false)
+    public function addHtmlTextBlock(string $html, bool $lineNumbered = false): void
     {
         $this->textBlocks[] = ['text' => $html, 'lineNumbered' => $lineNumbered];
     }
