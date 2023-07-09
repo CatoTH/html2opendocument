@@ -10,17 +10,15 @@ namespace CatoTH\HTML2OpenDocument;
 
 class Text extends Base
 {
-    /** @var null|\DOMElement */
-    private $nodeText = null;
+    private ?\DOMElement $nodeText = null;
+    private bool $nodeTemplate1Used = false;
+    private int $currentPage = 0;
 
-    /** @var bool */
-    private $node_template_1_used = false;
+    /** @var string[][]  */
+    private array $replaces = [0 => []];
 
-    /** @var string[] */
-    private $replaces = [];
-
-    /** @var array */
-    private $textBlocks = [];
+    /** @var string[][]  */
+    private array $textBlocks = [0 => []];
 
     /** @var null|\Closure */
     protected $preSaveHook = null;
@@ -41,6 +39,14 @@ class Text extends Base
         parent::__construct($templateFile, $options);
     }
 
+    public function nextPage(): void
+    {
+        $this->currentPage++;
+        $this->nodeTemplate1Used = false;
+        $this->replaces[$this->currentPage] = [];
+        $this->textBlocks[$this->currentPage] = [];
+    }
+
     public function finishAndOutputOdt(string $filename = ''): void
     {
         header('Content-Type: application/vnd.oasis.opendocument.text');
@@ -55,12 +61,12 @@ class Text extends Base
 
     public function addReplace(string $search, string $replace): void
     {
-        $this->replaces[$search] = $replace;
+        $this->replaces[$this->currentPage][$search] = $replace;
     }
 
     public function addHtmlTextBlock(string $html, bool $lineNumbered = false): void
     {
-        $this->textBlocks[] = ['text' => $html, 'lineNumbered' => $lineNumbered];
+        $this->textBlocks[$this->currentPage][] = ['text' => $html, 'lineNumbered' => $lineNumbered];
     }
 
     /**
@@ -473,43 +479,37 @@ class Text extends Base
             'style:text-position' => 'super 58%',
         ]);
 
-        /** @var \DOMNode[] $nodes */
-        $nodes = [];
-        foreach ($this->doc->getElementsByTagNameNS(static::NS_TEXT, 'span') as $element) {
-            $nodes[] = $element;
-        }
-        foreach ($this->doc->getElementsByTagNameNS(static::NS_TEXT, 'p') as $element) {
-            $nodes[] = $element;
-        }
+        $rootNodes = [];
+        /** @var \DOMElement $office */
+        $office = $this->doc->getElementsByTagNameNS(static::NS_OFFICE, 'text')->item(0);
+        $toRemove = [];
+        foreach ($office->childNodes as $child) {
+            if (is_a($child, \DOMText::class)) {
+                continue;
+            }
+            /** @var \DOMElement $child */
+            if ($child->nodeName === 'text:sequence-decls') {
+                continue;
+            }
 
-
-        $searchFor   = array_keys($this->replaces);
-        $replaceWith = array_values($this->replaces);
-        foreach ($nodes as $node) {
-            $children = $node->childNodes;
-            foreach ($children as $child) {
-                if ($child->nodeType == XML_TEXT_NODE) {
-                    /** @var \DOMText $child */
-                    $child->data = preg_replace($searchFor, $replaceWith, $child->data);
-
-                    if (preg_match("/\{\{ANTRAGSGRUEN:DUMMY\}\}/siu", $child->data)) {
-                        $node->parentNode->removeChild($node);
-                    }
-                    if (preg_match("/\{\{ANTRAGSGRUEN:TEXT\}\}/siu", $child->data)) {
-                        $this->nodeText = $node;
-                    }
+            $toRemove[] = $child;
+            $isDummy = false;
+            foreach ($child->childNodes as $subChild) {
+                if (is_a($subChild, \DOMText::class) && preg_match("/\{\{ANTRAGSGRUEN:DUMMY}}/siu", $subChild->data)) {
+                    $isDummy = true;
                 }
             }
-        }
-
-        foreach ($this->textBlocks as $textBlock) {
-            $newNodes = $this->html2ooNodes($textBlock['text'], $textBlock['lineNumbered']);
-            foreach ($newNodes as $newNode) {
-                $this->nodeText->parentNode->insertBefore($newNode, $this->nodeText);
+            if (!$isDummy) {
+                $rootNodes[] = $child;
             }
         }
+        foreach ($toRemove as $item) {
+            $office->removeChild($item);
+        }
 
-        $this->nodeText->parentNode->removeChild($this->nodeText);
+        foreach (array_keys($this->textBlocks) as $pageNo) {
+            $this->createPage($pageNo, $office, $rootNodes);
+        }
 
         if ($this->preSaveHook !== null) {
             call_user_func($this->preSaveHook, $this->doc);
@@ -518,15 +518,72 @@ class Text extends Base
         return $this->doc->saveXML();
     }
 
+    private function cloneNode(\DOMElement $node, \DOMDocument $doc, array $replaces): \DOMElement
+    {
+        $nd = $doc->createElement($node->nodeName);
+
+        foreach ($node->attributes as $value) {
+            $nd->setAttribute($value->nodeName, $value->value);
+        }
+
+        if (!$node->childNodes) {
+            return $nd;
+        }
+
+        foreach ($node->childNodes as $child) {
+            if ($child->nodeName == "#text") {
+                $searchFor   = array_keys($this->replaces[$this->currentPage]);
+                $replaceWith = array_values($this->replaces[$this->currentPage]);
+                $replacedText = preg_replace($searchFor, $replaceWith, $child->nodeValue);
+                $nd->appendChild($doc->createTextNode($replacedText));
+            } else {
+                $nd->appendChild($this->cloneNode($child, $doc, $replaces));
+            }
+        }
+
+        return $nd;
+    }
+
+    /**
+     * @param \DOMElement[] $templateNodes
+     */
+    protected function createPage(int $pageNo, \DOMElement $holder, array $templateNodes): void
+    {
+        $this->nodeTemplate1Used = false;
+        foreach ($templateNodes as $rootNode) {
+            $isTextNode = false;
+            foreach ($rootNode->childNodes as $childNode) {
+                if (is_a($childNode, \DOMText::class) && preg_match("/\{\{ANTRAGSGRUEN:TEXT}}/siu", $childNode->data)) {
+                    $isTextNode = true;
+                    $this->nodeText = $rootNode;
+                }
+            }
+            if ($isTextNode) {
+                foreach ($this->textBlocks[$pageNo] as $textBlock) {
+                    $newNodes = $this->html2ooNodes($textBlock['text'], $textBlock['lineNumbered']);
+                    foreach ($newNodes as $newNode) {
+                        $holder->appendChild($newNode);
+                    }
+                }
+            } else {
+                $clonedNode = $this->cloneNode($rootNode, $rootNode->ownerDocument, $this->replaces[$this->currentPage]);
+                $holder->appendChild($clonedNode);
+            }
+        }
+    }
+
     protected function getNextNodeTemplate(bool $lineNumbers): \DOMNode
     {
-        $node = $this->nodeText->cloneNode();
+        $node = $this->cloneNode($this->nodeText, $this->nodeText->ownerDocument, []);
+        while ($node->firstChild) {
+            $node->removeChild($node->firstChild);
+        }
         /** @var \DOMElement $node */
         if ($lineNumbers) {
-            if ($this->node_template_1_used) {
+            if ($this->nodeTemplate1Used) {
                 $node->setAttribute('text:style-name', 'Antragsgrün_20_LineNumbered_20_Standard');
             } else {
-                $this->node_template_1_used = true;
+                $this->nodeTemplate1Used = true;
                 $node->setAttribute('text:style-name', 'Antragsgrün_20_LineNumbered_20_First');
             }
         } else {
@@ -543,10 +600,10 @@ class Text extends Base
     {
         $node = $this->doc->createElementNS(static::NS_TEXT, $nodeType);
         if ($lineNumbers) {
-            if ($this->node_template_1_used) {
+            if ($this->nodeTemplate1Used) {
                 $node->setAttribute('text:style-name', 'Antragsgrün_20_LineNumbered_20_Standard');
             } else {
-                $this->node_template_1_used = true;
+                $this->nodeTemplate1Used = true;
                 $node->setAttribute('text:style-name', 'Antragsgrün_20_LineNumbered_20_First');
             }
         } else {
