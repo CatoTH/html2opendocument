@@ -180,7 +180,7 @@ class Text extends Base
      * @return \DOMNode[]
      * @throws \Exception
      */
-    protected function html2ooNodeInt(\DOMNode $srcNode, bool $lineNumbered, bool $inP, array $parentStyles = []): array
+    protected function html2ooNodeInt(\DOMNode $srcNode, bool $lineNumbered, bool $inP, array $parentStyles = [], ?int &$parentOlCounter = null): array
     {
         switch ($srcNode->nodeType) {
             case XML_ELEMENT_NODE:
@@ -189,7 +189,8 @@ class Text extends Base
                     echo "Element - " . $srcNode->nodeName . " / Children: " . $srcNode->childNodes->length . "<br>";
                 }
                 $needsIntermediateP = false;
-                $childStyles        = static::getChildStyles($srcNode, $parentStyles);
+                $childOlCounter = null;
+                $childStyles = static::getChildStyles($srcNode, $parentStyles);
                 switch ($srcNode->nodeName) {
                     case 'b':
                     case 'strong':
@@ -269,13 +270,29 @@ class Text extends Base
                         $inP = true;
                         break;
                     case 'ul':
+                        $dstEl = $this->doc->createElementNS(static::NS_TEXT, 'list');
+                        $dstEl->setAttribute('text:style-name', 'Antragsgrün_20_UL_Default');
+                        break;
                     case 'ol':
                         $dstEl = $this->doc->createElementNS(static::NS_TEXT, 'list');
+                        $dstEl->setAttribute('text:style-name', 'Antragsgrün_20_OL_Default');
+                        if ($srcNode->getAttribute('start')) {
+                            $childOlCounter = intval($srcNode->getAttribute('start'));
+                        } else {
+                            $childOlCounter = 1;
+                        }
                         break;
                     case 'li':
-                        $dstEl              = $this->doc->createElementNS(static::NS_TEXT, 'list-item');
+                        $dstEl = $this->doc->createElementNS(static::NS_TEXT, 'list-item');
                         $needsIntermediateP = true;
-                        $inP                = true;
+                        $inP = true;
+                        if ($srcNode->getAttribute('value')) {
+                            $parentOlCounter = intval($srcNode->getAttribute('value'));
+                            $dstEl->setAttribute('text:start-value', $srcNode->getAttribute('value'));
+                        } else {
+                            $dstEl->setAttribute('text:start-value', (string)$parentOlCounter);
+                        }
+                        $parentOlCounter++;
                         break;
                     case 'h1':
                         $dstEl = $this->createNodeWithBaseStyle('p', $lineNumbered);
@@ -332,7 +349,7 @@ class Text extends Base
                         echo "CHILD<br>" . $child->nodeType . "<br>";
                     }
 
-                    $dstNodes = $this->html2ooNodeInt($child, $lineNumbered, $inP, $childStyles);
+                    $dstNodes = $this->html2ooNodeInt($child, $lineNumbered, $inP, $childStyles, $childOlCounter);
                     foreach ($dstNodes as $dstNode) {
                         $dstEl->appendChild($dstNode);
                     }
@@ -532,8 +549,8 @@ class Text extends Base
 
         foreach ($node->childNodes as $child) {
             if ($child->nodeName == "#text") {
-                $searchFor   = array_keys($this->replaces[$this->currentPage]);
-                $replaceWith = array_values($this->replaces[$this->currentPage]);
+                $searchFor   = array_keys($replaces);
+                $replaceWith = array_values($replaces);
                 $replacedText = preg_replace($searchFor, $replaceWith, $child->nodeValue);
                 $nd->appendChild($doc->createTextNode($replacedText));
             } else {
@@ -566,7 +583,7 @@ class Text extends Base
                     }
                 }
             } else {
-                $clonedNode = $this->cloneNode($rootNode, $rootNode->ownerDocument, $this->replaces[$this->currentPage]);
+                $clonedNode = $this->cloneNode($rootNode, $rootNode->ownerDocument, $this->replaces[$pageNo]);
                 $holder->appendChild($clonedNode);
             }
         }
