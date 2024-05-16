@@ -20,11 +20,10 @@ class Text extends Base
     /** @var string[][]  */
     private array $textBlocks = [0 => []];
 
-    /** @var null|\Closure */
-    protected $preSaveHook = null;
+    protected ?\Closure $preSaveHook = null;
 
-    const STYLE_INS = 'ins';
-    const STYLE_DEL = 'del';
+    public const STYLE_INS = 'ins';
+    public const STYLE_DEL = 'del';
 
     /**
      * @throws \Exception
@@ -50,7 +49,7 @@ class Text extends Base
     public function finishAndOutputOdt(string $filename = ''): void
     {
         header('Content-Type: application/vnd.oasis.opendocument.text');
-        if ($filename != '') {
+        if ($filename !== '') {
             header('Content-disposition: attachment;filename="' . addslashes($filename) . '"');
         }
 
@@ -76,9 +75,9 @@ class Text extends Base
     {
         if ($element->hasAttribute('class')) {
             return explode(' ', $element->getAttribute('class'));
-        } else {
-            return [];
         }
+        
+        return [];
     }
 
     /**
@@ -235,7 +234,7 @@ class Text extends Base
                             if ($attr) {
                                 $dstEl->setAttribute('xlink:href', $attr);
                             }
-                        } catch (\Exception $e) {
+                        } catch (\Exception) {
                         }
                         break;
                     case 'p':
@@ -259,9 +258,9 @@ class Text extends Base
                         $dstEl = $this->createNodeWithBaseStyle('p', $lineNumbered);
                         $class = ($lineNumbered ? 'Blockquote_Linenumbered' : 'Blockquote');
                         $dstEl->setAttribute('text:style-name', 'Antragsgrün_20_' . $class);
-                        if ($srcNode->childNodes->length == 1) {
+                        if ($srcNode->childNodes->length === 1) {
                             foreach ($srcNode->childNodes as $child) {
-                                if ($child->nodeName == 'p') {
+                                if ($child->nodeName === 'p') {
                                     $srcNode = $child;
                                 }
                             }
@@ -339,7 +338,7 @@ class Text extends Base
                 }
 
                 if ($needsIntermediateP && $dstEl->childNodes->length > 0) {
-                    $dstEl = static::wrapChildrenWithP($dstEl, $lineNumbered);
+                    $dstEl = $this->wrapChildrenWithP($dstEl, $lineNumbered);
                 }
                 return [$dstEl];
             case XML_TEXT_NODE:
@@ -362,7 +361,6 @@ class Text extends Base
                     $textnode = $dstEl;
                 }
                 return [$textnode];
-                break;
             case XML_DOCUMENT_TYPE_NODE:
                 if ($this->DEBUG) {
                     echo 'Type Node<br>';
@@ -382,12 +380,6 @@ class Text extends Base
 	 */
     protected function html2ooNodes(string $html, bool $lineNumbered): array
     {
-        if (!is_string($html)) {
-            echo print_r($html, true);
-            echo print_r(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS), true);
-            die();
-        }
-
         $body = $this->html2DOM($html);
 
         $retNodes = [];
@@ -395,29 +387,27 @@ class Text extends Base
             $child = $body->childNodes->item($i);
 
             /** @var \DOMNode $child */
-            if ($child->nodeName == 'ul') {
+            if ($child->nodeName === 'ul') {
                 // Alle anderen Nodes dieses Aufrufs werden ignoriert
                 if ($this->DEBUG) {
                     echo 'LIST<br>';
                 }
                 $recNewNodes = $this->html2ooNodeInt($child, $lineNumbered, false);
-            } else {
-                if ($child->nodeType == XML_TEXT_NODE) {
-                    $new_node = $this->getNextNodeTemplate($lineNumbered);
-                    /** @var \DOMText $child */
-                    if ($this->DEBUG) {
-                        echo $child->nodeName . ' - ' . htmlentities($child->data, ENT_COMPAT, 'UTF-8') . '<br>';
-                    }
-                    $text       = new \DOMText();
-                    $text->data = $child->data;
-                    $new_node->appendChild($text);
-                    $recNewNodes = [$new_node];
-                } else {
-                    if ($this->DEBUG) {
-                        echo $child->nodeName . '!!!!!!!!!!!!<br>';
-                    }
-                    $recNewNodes = $this->html2ooNodeInt($child, $lineNumbered, false);
+            } else if ( $child->nodeType===XML_TEXT_NODE) {
+                $new_node = $this->getNextNodeTemplate($lineNumbered);
+                /** @var \DOMText $child */
+                if ($this->DEBUG) {
+                    echo $child->nodeName . ' - ' . htmlentities($child->data, ENT_COMPAT, 'UTF-8') . '<br>';
                 }
+                $text       = new \DOMText();
+                $text->data = $child->data;
+                $new_node->appendChild($text);
+                $recNewNodes = [$new_node];
+            } else {
+                if ($this->DEBUG) {
+                    echo $child->nodeName . '!!!!!!!!!!!!<br>';
+                }
+                $recNewNodes = $this->html2ooNodeInt($child, $lineNumbered, false);
             }
             foreach ($recNewNodes as $recNewNode) {
                 $retNodes[] = $recNewNode;
@@ -531,7 +521,7 @@ class Text extends Base
         }
 
         foreach ($node->childNodes as $child) {
-            if ($child->nodeName == "#text") {
+            if ($child->nodeName === "#text") {
                 $searchFor   = array_keys($this->replaces[$this->currentPage]);
                 $replaceWith = array_values($this->replaces[$this->currentPage]);
                 $replacedText = preg_replace($searchFor, $replaceWith, $child->nodeValue);
@@ -593,10 +583,7 @@ class Text extends Base
         return $node;
     }
 
-    /**
-     * @return \DOMElement|\DOMNode
-     */
-    protected function createNodeWithBaseStyle(string $nodeType, bool $lineNumbers)
+    protected function createNodeWithBaseStyle(string $nodeType, bool $lineNumbers): \DOMNode|\DOMElement
     {
         $node = $this->doc->createElementNS(static::NS_TEXT, $nodeType);
         if ($lineNumbers) {

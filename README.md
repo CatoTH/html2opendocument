@@ -1,4 +1,4 @@
-This is a simple PHP-library to create create OpenDocument Text- and Spreadsheet-files (ODT / ODS) from HTML-formatted text.
+This is a simple PHP-library to create OpenDocument Text- and Spreadsheet-files (ODT / ODS) from HTML-formatted text.
 
 It does not support formulae / calculations in spreadsheets. The focus lies on formatted text.
 
@@ -96,4 +96,4 @@ $ods->finishAndOutputOds('demo.ods');
 
 ## License
 
-This library is licensed under the [MIT license](http://opensource.org/licenses/MIT)
+This library is licensed under the [MIT license](https://opensource.org/license/mit/)

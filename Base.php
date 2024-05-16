@@ -10,45 +10,38 @@ namespace CatoTH\HTML2OpenDocument;
 
 abstract class Base
 {
-    const NS_OFFICE   = 'urn:oasis:names:tc:opendocument:xmlns:office:1.0';
-    const NS_TEXT     = 'urn:oasis:names:tc:opendocument:xmlns:text:1.0';
-    const NS_FO       = 'urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0';
-    const NS_DRAW     = 'urn:oasis:names:tc:opendocument:xmlns:drawing:1.0';
-    const NS_STYLE    = 'urn:oasis:names:tc:opendocument:xmlns:style:1.0';
-    const NS_SVG      = 'urn:oasis:names:tc:opendocument:xmlns:svg-compatible:1.0';
-    const NS_TABLE    = 'urn:oasis:names:tc:opendocument:xmlns:table:1.0';
-    const NS_CALCTEXT = 'urn:org:documentfoundation:names:experimental:calc:xmlns:calcext:1.0';
-    const NS_XLINK    = 'http://www.w3.org/1999/xlink';
+    public const NS_OFFICE   = 'urn:oasis:names:tc:opendocument:xmlns:office:1.0';
+    public const NS_TEXT     = 'urn:oasis:names:tc:opendocument:xmlns:text:1.0';
+    public const NS_FO       = 'urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0';
+    public const NS_DRAW     = 'urn:oasis:names:tc:opendocument:xmlns:drawing:1.0';
+    public const NS_STYLE    = 'urn:oasis:names:tc:opendocument:xmlns:style:1.0';
+    public const NS_SVG      = 'urn:oasis:names:tc:opendocument:xmlns:svg-compatible:1.0';
+    public const NS_TABLE    = 'urn:oasis:names:tc:opendocument:xmlns:table:1.0';
+    public const NS_CALCTEXT = 'urn:org:documentfoundation:names:experimental:calc:xmlns:calcext:1.0';
+    public const NS_XLINK    = 'http://www.w3.org/1999/xlink';
 
 
-    /** @var \DOMDocument|null */
-    protected $doc = null;
+    protected ?\DOMDocument $doc = null;
 
-    /** @var bool */
-    protected $DEBUG = false;
-    protected $trustHtml = false;
+    protected bool $DEBUG     = false;
+    protected bool $trustHtml = false;
 
-    /** @var string */
-    protected $tmpPath = '/tmp/';
+    protected string $tmpPath = '/tmp/'; // FIXME check type: mixed
 
-    /** @var \ZipArchive */
-    private $zip;
+    private \ZipArchive $zip;
 
-    /** @var @string */
-    private $tmpZipFile;
+    private string $tmpZipFile;
 
-    /** @var null|string */
-    protected $pageWidth        = null;
-    protected $pageHeight       = null;
-    protected $printOrientation = null;
-    protected $marginTop        = null;
-    protected $marginLeft       = null;
-    protected $marginRight      = null;
-    protected $marginBottom     = null;
-
-    /** @var string */
-    protected $colorIns         = '#008800';
-    protected $colorDel         = '#880000';
+    protected ?string $pageWidth        = NULL;
+    protected ?string $pageHeight       = NULL;
+    protected ?string $printOrientation = NULL;
+    protected ?string $marginTop        = NULL;
+    protected ?string $marginLeft       = NULL;
+    protected ?string $marginRight      = NULL;
+    protected ?string $marginBottom     = NULL;
+    
+    protected string $colorIns = '#008800'; // FIXME check type
+    protected string $colorDel = '#880000';
 
     /**
      * @throws \Exception
@@ -70,12 +63,12 @@ abstract class Base
             mkdir($this->tmpPath);
         }
 
-        $this->tmpZipFile = $this->tmpPath . uniqid('zip-');
+        $this->tmpZipFile = $this->tmpPath . uniqid('zip-', true);
         file_put_contents($this->tmpZipFile, $template);
 
         $this->zip = new \ZipArchive();
         if ($this->zip->open($this->tmpZipFile) !== true) {
-            throw new \Exception("cannot open <$this->tmpZipFile>\n");
+            throw new \RuntimeException("cannot open <$this->tmpZipFile>\n");
         }
 
         $content = $this->zip->getFromName('content.xml');
@@ -142,7 +135,7 @@ abstract class Base
         $this->zip->addFromString('styles.xml', $stylesStr);
     }
 
-    abstract function create(): string;
+    abstract public function create(): string;
 
     protected function purifyHTML(string $html, array $config): string
     {
