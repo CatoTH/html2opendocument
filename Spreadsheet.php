@@ -10,24 +10,24 @@ namespace CatoTH\HTML2OpenDocument;
 
 class Spreadsheet extends Base
 {
-    const TYPE_TEXT   = 0;
-    const TYPE_NUMBER = 1;
-    const TYPE_HTML   = 2;
-    const TYPE_LINK   = 3;
+    public const TYPE_TEXT   = 0;
+    public const TYPE_NUMBER = 1;
+    public const TYPE_HTML   = 2;
+    public const TYPE_LINK   = 3;
+    
+    public const FORMAT_LINEBREAK  = 0;
+    public const FORMAT_BOLD       = 1;
+    public const FORMAT_ITALIC     = 2;
+    public const FORMAT_UNDERLINED = 3;
+    public const FORMAT_STRIKE     = 4;
+    public const FORMAT_INS        = 5;
+    public const FORMAT_DEL        = 6;
+    public const FORMAT_LINK       = 7;
+    public const FORMAT_INDENTED   = 8;
+    public const FORMAT_SUP        = 9;
+    public const FORMAT_SUB        = 10;
 
-    const FORMAT_LINEBREAK  = 0;
-    const FORMAT_BOLD       = 1;
-    const FORMAT_ITALIC     = 2;
-    const FORMAT_UNDERLINED = 3;
-    const FORMAT_STRIKE     = 4;
-    const FORMAT_INS        = 5;
-    const FORMAT_DEL        = 6;
-    const FORMAT_LINK       = 7;
-    const FORMAT_INDENTED   = 8;
-    const FORMAT_SUP        = 9;
-    const FORMAT_SUB        = 10;
-
-    public static $FORMAT_NAMES = [
+    public static array $FORMAT_NAMES = [
         0  => 'linebreak',
         1  => 'bold',
         2  => 'italic',
@@ -40,27 +40,24 @@ class Spreadsheet extends Base
         9  => 'sup',
         10 => 'sub',
     ];
-
-    /** @var \DOMDocument */
-    protected $doc = null;
-
-    /** @var \DOMElement */
-    protected $domTable;
-
-    protected $matrix           = [];
-    protected $matrixRows       = 0;
-    protected $matrixCols       = 0;
-    protected $matrixColWidths  = [];
-    protected $matrixRowHeights = [];
-
-    protected $rowNodes         = [];
-    protected $cellNodeMatrix   = [];
-    protected $cellStylesMatrix = [];
-
-    protected $classCache = [];
-
-    /** @var null|\Closure */
-    protected $preSaveHook = null;
+    
+    protected ?\DOMDocument $doc = NULL;
+    
+    protected \DOMElement $domTable;
+    
+    protected array $matrix           = [];
+    protected int   $matrixRows       = 0;
+    protected int   $matrixCols       = 0;
+    protected array $matrixColWidths  = [];
+    protected array $matrixRowHeights = [];
+    
+    protected array $rowNodes         = [];
+    protected array $cellNodeMatrix   = [];
+    protected array $cellStylesMatrix = [];
+    
+    protected array $classCache = [];
+    
+    protected ?\Closure $preSaveHook = NULL;
 
     /**
      * @param array $options
@@ -68,7 +65,7 @@ class Spreadsheet extends Base
      */
     public function __construct($options = [])
     {
-        if (isset($options['templateFile']) && $options['templateFile'] != '') {
+        if (isset($options['templateFile']) && is_string($options['templateFile']) && $options['templateFile'] !== '') {
             $templateFile = $options['templateFile'];
         } else {
             $templateFile = __DIR__ . DIRECTORY_SEPARATOR . 'default-template.ods';
@@ -79,7 +76,7 @@ class Spreadsheet extends Base
     public function finishAndOutputOds(string $filename = ''): void
     {
         header('Content-Type: application/vnd.oasis.opendocument.spreadsheet');
-        if ($filename != '') {
+        if ($filename !== '') {
             header('Content-disposition: attachment;filename="' . addslashes($filename) . '"');
         }
 
@@ -141,7 +138,7 @@ class Spreadsheet extends Base
      * - for contentType === Spreadsheet::TYPE_LINK: ['href' => $href, 'text' => $email]
      * - for all other types: a string
      */
-    public function setCell(int $row, int $col, int $contentType, $content, ?string $cssClass = null, ?array $styles = null): void
+    public function setCell(int $row, int $col, int $contentType, mixed $content, ?string $cssClass = null, ?array $styles = null): void
     {
         $this->initRow($row);
         if ($col > $this->matrixCols) {
@@ -176,8 +173,8 @@ class Spreadsheet extends Base
     protected function getCleanDomTable(): \DOMElement
     {
         $domTables = $this->doc->getElementsByTagNameNS(static::NS_TABLE, 'table');
-        if ($domTables->length != 1) {
-            throw new \Exception('Could not parse ODS template');
+        if ($domTables->length !== 1) {
+            throw new \RuntimeException('Could not parse ODS template.');
         }
 
         $this->domTable = $domTables->item(0);
@@ -245,7 +242,7 @@ class Spreadsheet extends Base
 
                             //$this->setMinRowHeight($row, count($ps));
                             $styles = $cell['styles'];
-                            if (isset($styles['fo:wrap-option']) && $styles['fo:wrap-option'] == 'no-wrap') {
+                            if (isset($styles['fo:wrap-option']) && $styles['fo:wrap-option'] === 'no-wrap') {
                                 $wrap   = 'no-wrap';
                                 $height = 1;
                             } else {
@@ -445,7 +442,7 @@ class Spreadsheet extends Base
                     if ($attr) {
                         $currentFormats['href'] = $attr;
                     }
-                } catch (\Exception $e) {
+                } catch (\Exception) {
                 }
                 break;
             case 'span':
@@ -583,7 +580,7 @@ class Spreadsheet extends Base
         $nodes    = [];
         $currentP = $this->doc->createElementNS(static::NS_TEXT, 'p');
         foreach ($tokens as $token) {
-            if (trim($token['text']) != '') {
+            if (trim($token['text']) !== '') {
                 $node = $this->doc->createElement('text:span');
                 if (count($token['formattings']) > 0) {
                     $className = $this->getClassByFormats($token['formattings']);
@@ -603,7 +600,8 @@ class Spreadsheet extends Base
         return $nodes;
     }
 
-    public function setPreSaveHook(callable $cb) {
+    public function setPreSaveHook(callable $cb): void
+    {
         $this->preSaveHook = $cb;
     }
 

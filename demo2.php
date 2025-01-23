@@ -5,7 +5,7 @@ use CatoTH\HTML2OpenDocument\Spreadsheet;
 require_once(__DIR__ . DIRECTORY_SEPARATOR . 'vendor/autoload.php');
 
 
-$ods = new \CatoTH\HTML2OpenDocument\Spreadsheet();
+$ods = new Spreadsheet();
 
 // Plain text
 $ods->setCell(0, 0, Spreadsheet::TYPE_TEXT, 'Plain text with native formatting');
@@ -46,5 +46,3 @@ $ods->setCell(3, 1, Spreadsheet::TYPE_HTML, $html);
 
 
 $ods->finishAndOutputOds('demo.ods');
-
-?>
